@@ -3,8 +3,8 @@ package main.unipi.iot.mqtt.devices.messages;
 import main.unipi.iot.mqtt.TopicMessage;
 
 public class FloatMessage implements TopicMessage {
-	public long node; 		// Node ID
-	public int floatLevel;	// Float level (0-low | 1-mid | 2-high)
+	public long node; // Node ID
+	public int temperature;
 
 	public Long getSensorId() {
 		return node;
@@ -12,6 +12,6 @@ public class FloatMessage implements TopicMessage {
 
 	@Override
 	public int getValue() {
-		return floatLevel;
+		return temperature;
 	}
 }

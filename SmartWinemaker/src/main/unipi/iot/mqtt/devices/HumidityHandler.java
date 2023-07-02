@@ -15,7 +15,7 @@ import main.unipi.iot.mqtt.TopicHandler;
 import main.unipi.iot.mqtt.TopicMessage;
 import main.unipi.iot.mqtt.devices.messages.HumidityMessage;
 
-public class HumidityHandler implements TopicHandler {
+public class HumidityHandler implements TopicHandler{
 	public static int lowerBoundHumidity = 40;
 	public static int upperBoundHumidity = 60;
 	private static final Gson parser = new Gson();
@@ -46,48 +46,57 @@ public class HumidityHandler implements TopicHandler {
 			return data.stream().map(datum -> (double) datum.humidity) // take only the humidity
 					.reduce(0.0d, Double::sum) / data.size();
 		}
-	}
 
-	private final Map<Long, HumidityHandler.Statistics> sensorsStats = new HashMap<>();
+		private final Map<Long, HumidityHandler.Statistics> sensorsStats = new HashMap<>();
+
+		public TopicMessage parse(MqttMessage message) {
+			return parser.fromJson(new String(message.getPayload()), HumidityMessage.class);
+		}
+
+		private double avg = 0.0;
+
+		public double getAvg() {
+			return avg;
+		}
+
+		public void callback(TopicMessage parsedMessage, ActuatorManager actManager) {
+			HumidityMessage message = (HumidityMessage) parsedMessage;
+			HumidifierManager manager = (HumidifierManager) actManager;
+
+			// @TODO Inserisci nella base di dati
+			if (!sensorsStats.containsKey(message.getSensorId()))
+				sensorsStats.put(message.getSensorId(), new Statistics());
+			HumidityHandler.Statistics sensorStats = sensorsStats.get(message.getSensorId());
+			double oldAvg = sensorStats.average();
+			sensorStats.add(message.humidity);
+			sensorStats.clean();
+			avg = sensorStats.average();
+			double midRange = (upperBoundHumidity + lowerBoundHumidity) / 2.0;
+			String mes;
+			if (avg < (lowerBoundHumidity + (midRange - lowerBoundHumidity)) / 2) {
+				// INC
+				mes = "INC";
+			} else if (avg > (upperBoundHumidity - (upperBoundHumidity - midRange) / 2)) {
+				// DEC
+				mes = "DEC";
+			} else {
+				// OFF
+				mes = "OFF";
+			}
+			//manager.getAssociatedSensor(message.getSensorId()).sendMessage();
+			//DBDriver.getInstance().insertHumiditySample(message);
+		}
+	}
 
 	@Override
 	public TopicMessage parse(MqttMessage message) {
-		return parser.fromJson(new String(message.getPayload()), HumidityMessage.class);
-	}
-
-	private double avg = 0.0;
-
-	public double getAvg() {
-		return avg;
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
-	public void callback(TopicMessage parsedMessage, ActuatorManager actManager) {
-		HumidityMessage message = (HumidityMessage) parsedMessage;
-		// HumidifierManager manager = (HumidifierManager) actManager;
-
-		// @TODO Inserisci nella base di dati
-		if (!sensorsStats.containsKey(message.getSensorId()))
-			sensorsStats.put(message.getSensorId(), new Statistics());
-		HumidityHandler.Statistics sensorStats = sensorsStats.get(message.getSensorId());
-		double oldAvg = sensorStats.average();
-		sensorStats.add(message.humidity);
-		sensorStats.clean();
-		avg = sensorStats.average();
-		double midRange = (upperBoundHumidity + lowerBoundHumidity) / 2.0;
-		String mes;
-		if (avg < (lowerBoundHumidity + (midRange - lowerBoundHumidity)) / 2) {
-			// INC
-			mes = "INC";
-		} else if (avg > (upperBoundHumidity - (upperBoundHumidity - midRange) / 2)) {
-			// DEC
-			mes = "DEC";
-		} else {
-			// OFF
-			mes = "OFF";
-		}
-		// manager.getAssociatedSensor(message.getSensorId()).sendMessage();
-		// DBDriver.getInstance().insertHumiditySample(message);
+	public void callback(TopicMessage parsedMessage, ActuatorManager m) {
+		// TODO Auto-generated method stub
+		
 	}
-
 }

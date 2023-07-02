@@ -21,6 +21,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import com.google.gson.Gson;
 
 import main.unipi.iot.coap.ActuatorManager;
+import main.unipi.iot.coap.actuators.manager.HumidifierManager;
 import main.unipi.iot.coap.actuators.manager.SpoutManager;
 import main.unipi.iot.mqtt.TopicHandler;
 import main.unipi.iot.mqtt.TopicMessage;
@@ -45,12 +46,14 @@ public class Coordinator extends CoapServer implements MqttCallback {
 	private static final Map<String, ActuatorManager> ACTUATORS = new HashMap<String, ActuatorManager>() {
 		{
 			put("spout", new SpoutManager());
+			put("temperatureAct", new HumidifierManager());
 		}
 	};
 
 	private static final Map<String, String> TOPIC_TO_ACTUATOR = new HashMap<String, String>() {
 		{
 			put("pressure", "spout");
+			put("temperatureInt", "temperatureAct"); //TODO ho il dubbio se sia giusto
 		}
 	};
 
@@ -123,12 +126,10 @@ public class Coordinator extends CoapServer implements MqttCallback {
 
 		System.out.println(
 				"Incoming message from " + m.getSensorId() + " with topic " + topic + " value=" + m.getValue());
-		if (topic.equals("pressure")) {
-			try {
-				manager.callback(m, ACTUATORS.get(TOPIC_TO_ACTUATOR.get(topic)));
-			} catch (Throwable e) {
-				System.out.println("Failed to run callback() bc " + e.getMessage());
-			}
+		try {
+			manager.callback(m, ACTUATORS.get(TOPIC_TO_ACTUATOR.get(topic)));
+		} catch (Throwable e) {
+			System.out.println("Failed to run callback() bc " + e.getMessage());
 		}
 	}
 
@@ -157,13 +158,15 @@ public class Coordinator extends CoapServer implements MqttCallback {
 		// CoAP stuff
 		this.add(new CoapRegistrationResource());
 	}
-
-	public static void main(String[] args) throws UnknownHostException {
-		Coordinator coordinator = new Coordinator();
-		InetAddress addr = InetAddress.getByName("0.0.0.0");
-		InetSocketAddress bindToAddress = new InetSocketAddress(addr, 5683);
-		coordinator.addEndpoint(new CoapEndpoint(bindToAddress));
-		coordinator.start();
-	}
+	
+	
+	public static void main( String[] args ) throws UnknownHostException {
+        Coordinator coordinator = new Coordinator();
+        InetAddress addr = InetAddress.getByName("0.0.0.0");
+        InetSocketAddress bindToAddress = new InetSocketAddress(addr, 5683);
+        coordinator.addEndpoint(new CoapEndpoint(bindToAddress));
+        coordinator.start();
+    }
+	
 
 }
