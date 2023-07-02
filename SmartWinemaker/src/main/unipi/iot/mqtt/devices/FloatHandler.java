@@ -16,6 +16,7 @@ public class FloatHandler implements TopicHandler {
 		return parser.fromJson(new String(message.getPayload()), FloatMessage.class);
 	}
 
+	@Override
 	public void callback(TopicMessage parsedMessage, ActuatorManager actManager) {
 		FloatMessage message = (FloatMessage) parsedMessage;
 		System.out.println(message);
