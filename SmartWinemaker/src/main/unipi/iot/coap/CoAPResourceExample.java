@@ -1,4 +1,4 @@
-package iot.unipi.it;
+package main.unipi.iot.coap;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.coap.CoAP.ResponseCode;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;

@@ -11,6 +11,7 @@ import java.net.UnknownHostException;
 import org.eclipse.californium.core.network.CoapEndpoint;
 
 import main.unipi.iot.mqtt.devices.HumidityHandler;
+import main.unipi.iot.mqtt.devices.messages.TemperatureMessage;
 
 public class main {
 
@@ -37,6 +38,14 @@ public class main {
 				
 				if(command.equals("getH")) { 
 					//System.out.print(humidityHandler.);
+					
+				}
+				else if(command.equals("tryTemp")) {
+					TemperatureMessage t=new TemperatureMessage();
+					t.node=2;
+					t.temperature=15;
+					DBManager d=DBManager.getInstance();
+					d.insertSampleTemperature(t);
 				}
 				else if(command.equals("exit")) {
 					System.out.println("Closing application.");
