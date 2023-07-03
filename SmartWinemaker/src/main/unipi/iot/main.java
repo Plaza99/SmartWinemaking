@@ -10,7 +10,6 @@ import java.net.UnknownHostException;
 
 import org.eclipse.californium.core.network.CoapEndpoint;
 
-import main.unipi.iot.mqtt.devices.HumidityHandler;
 import main.unipi.iot.mqtt.devices.messages.TemperatureMessage;
 
 public class main {
@@ -22,8 +21,6 @@ public class main {
 		InetSocketAddress bindToAddress = new InetSocketAddress(addr, 5683);
 		coordinator.addEndpoint(new CoapEndpoint(bindToAddress));
 		coordinator.start();
-		
-		HumidityHandler humidityHandler = (HumidityHandler) coordinator.getTopicManager("humidity");
 		
 		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
         String command;

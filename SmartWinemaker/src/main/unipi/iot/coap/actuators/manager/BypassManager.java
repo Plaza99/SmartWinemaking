@@ -5,9 +5,9 @@ import java.util.Map;
 
 import main.unipi.iot.coap.Actuator;
 import main.unipi.iot.coap.ActuatorManager;
-import main.unipi.iot.coap.actuators.Humidifier;
+import main.unipi.iot.coap.actuators.Bypass;
 
-public class SpoutManager implements ActuatorManager{
+public class BypassManager implements ActuatorManager{
 	private final Map<Long, Actuator> sensorsToActuators = new HashMap<Long, Actuator>();
 
 	public Actuator getAssociatedSensor(long id) {
@@ -15,7 +15,8 @@ public class SpoutManager implements ActuatorManager{
 	}
 
 	public void registerNewActuator(long sensorId, String ip) {
-		sensorsToActuators.put(sensorId, new Humidifier(ip));
+		System.out.println("Actuator registered");
+		sensorsToActuators.put(sensorId, new Bypass(ip));
 	}
 
 	public void deleteActuator(long sensorID) {

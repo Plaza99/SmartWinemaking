@@ -5,17 +5,18 @@ import org.eclipse.californium.core.coap.MediaTypeRegistry;
 
 import main.unipi.iot.coap.Actuator;
 
-public class Humidifier implements Actuator{
+public class Bypass implements Actuator{
 	private String ip;
     CoapClient coapClient;
 
-    public Humidifier(String ip) {
+    public Bypass(String ip) {
         this.ip = ip;
-        coapClient = new CoapClient("coap://[" + ip + "]/humidity/humidifier");
+        System.out.println("Bypass with ip: "+ip);
+        coapClient = new CoapClient("coap://[" + ip + "]/bypass");
     }
 
     public void sendMessage(String message) {
-        System.out.println();
+        System.out.println(message);
         coapClient.put(message, MediaTypeRegistry.TEXT_PLAIN);
     }
 

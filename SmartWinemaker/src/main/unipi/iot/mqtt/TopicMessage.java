@@ -1,6 +1,6 @@
 package main.unipi.iot.mqtt;
 
-public interface TopicMessage {
+public interface TopicMessage{
 	Long getSensorId();
 	int getValue();
 }

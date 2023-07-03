@@ -23,19 +23,18 @@
 
 /* Log configuration */
 #include "sys/log.h"
-#define LOG_MODULE "spout"
+#define LOG_MODULE "bypass"
 #define LOG_LEVEL LOG_LEVEL_DBG
 
 #define INTERVAL_BETWEEN_CONNECTION_TESTS 1
 
-extern coap_resource_t res_light_switch;
-extern coap_resource_t res_light_color;
+extern coap_resource_t res_bypass;
 
 #ifdef DO_REGISTER
 char *service_url = "/registration";
 static bool registered = false;
 
-#define SENSOR_TYPE "{\"deviceType\": \"spout\", \"sensorId\": %u}"
+#define SENSOR_TYPE "{\"deviceType\": \"bypass\", \"sensorId\": %u}"
 
 #endif
 
@@ -70,23 +69,23 @@ void client_chunk_handler(coap_message_t *response) {
 }
 
 /* Declare and auto-start this file's process */
-PROCESS(light_server, "Spout Server");
-AUTOSTART_PROCESSES(&light_server);
+PROCESS(bypass_server, "Bypass Server");
+AUTOSTART_PROCESSES(&bypass_server);
 
-PROCESS_THREAD(light_server, ev, data){
+PROCESS_THREAD(bypass_server, ev, data){
 	PROCESS_BEGIN();
 
 #ifdef DO_REGISTER
 	static coap_endpoint_t server_ep;
-    static coap_message_t request;
+    	static coap_message_t request;
 #endif
 
 	PROCESS_PAUSE();
 
 	leds_set(LEDS_NUM_TO_MASK(LEDS_RED));
 
-	LOG_INFO("Starting CoAP-Spout\n");
-	coap_activate_resource(&res_light_switch, "spout"); 
+	LOG_INFO("Starting: CoAP-Bypass\n");
+	coap_activate_resource(&res_bypass, "bypass"); 
 
 	// try to connect to the border router
 	etimer_set(&connectivity_timer, CLOCK_SECOND * INTERVAL_BETWEEN_CONNECTION_TESTS);
@@ -107,7 +106,7 @@ PROCESS_THREAD(light_server, ev, data){
         coap_init_message(&request, COAP_TYPE_CON, COAP_POST, 0);
         coap_set_header_uri_path(&request, service_url);
         memset(registrationString, 0x00, 100);
-        registrationStringSize = snprintf(registrationString, 100, SENSOR_TYPE, 40);
+        registrationStringSize = snprintf(registrationString, 100, SENSOR_TYPE, 42);
         coap_set_payload(&request, (uint8_t *)registrationString, registrationStringSize);
 
         COAP_BLOCKING_REQUEST(&server_ep, &request, client_chunk_handler);

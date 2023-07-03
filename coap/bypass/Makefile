@@ -1,4 +1,4 @@
-CONTIKI_PROJECT = water_pump
+CONTIKI_PROJECT = res_bypass
 
 all: $(CONTIKI_PROJECT)
 
