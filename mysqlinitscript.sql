@@ -4,10 +4,18 @@ CREATE DATABASE smart_wine;
 
 USE smart_wine;
 
-CREATE TABLE `float level` (
+CREATE TABLE `float_level` (
 	`id`		INT NOT NULL,
 	`timestamp`	TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	`level`		INT NOT NULL,
+	
+	PRIMARY KEY (`id`, `timestamp`)
+);
+
+CREATE TABLE `co2` (
+	`id`		INT NOT NULL,
+	`timestamp`	TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	`value`		FLOAT NOT NULL,
 	
 	PRIMARY KEY (`id`, `timestamp`)
 );

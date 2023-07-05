@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import main.unipi.iot.mqtt.devices.messages.Co2Message;
 import main.unipi.iot.mqtt.devices.messages.FloatMessage;
 import main.unipi.iot.mqtt.devices.messages.TemperatureMessage;
 
@@ -14,7 +15,7 @@ public class DBManager {
 	private static String MySqlIp = "127.0.0.1";
 	private static int MySqlPort = 3306;
 	private static String MySqlUsername = "root";
-	private static String MySqlPassword = "mysqlpass";
+	private static String MySqlPassword = "PASSWORD"; //mysqlpass
 	private static String MySqlDbName = "smart_wine";
 	private static DBManager instance;
 
@@ -89,14 +90,16 @@ public class DBManager {
 	 * this.insert("temperature", 2, attr, values); }
 	 */
 	public void insertSampleFloat(FloatMessage m) {
-		String[] attr = { "id", "temperature" };
+		String[] attr = { "id", "float" };
 
 		String[] values = { Long.toString(m.getSensorId()), Integer.toString(m.getValue()) };
 		this.insert("float", 2, attr, values);
 	}
-	/*
-	 * public void insertSampleDensity() {
-	 * 
-	 * }
-	 */
+	
+	public void insertSampleCo2(Co2Message m) {
+		String[] attr = { "id", "co2" };
+
+		String[] values = { Long.toString(m.getSensorId()), Integer.toString(m.getValue()) };
+		this.insert("float", 2, attr, values);
+	}
 }

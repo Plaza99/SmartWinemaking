@@ -1,10 +1,5 @@
 package main.unipi.iot.mqtt.devices;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import com.google.gson.Gson;
@@ -30,7 +25,7 @@ public class FloatHandler implements TopicHandler {
 	public void callback(TopicMessage parsedMessage, ActuatorManager actManager) {
 		FloatMessage message = (FloatMessage) parsedMessage;
 		BypassManager spoutManager = (BypassManager) actManager;
-		System.out.println(message+" - last float level: "+ lastFloatLevel);
+		System.out.println(message + " - last float level: " + lastFloatLevel);
 		int currFloatLevel = parsedMessage.getValue();
 
 		if (currFloatLevel == 2 && currFloatLevel != lastFloatLevel) { // Float level: high
@@ -40,6 +35,6 @@ public class FloatHandler implements TopicHandler {
 			spoutManager.getAssociatedSensor(message.getSensorId()).sendMessage("DOWN");
 			lastFloatLevel = currFloatLevel;
 		}
-		// DBManager.getInstance().insertFloatLevelSample(message);
+		DBManager.getInstance().insertSampleFloat(message);
 	}
 }

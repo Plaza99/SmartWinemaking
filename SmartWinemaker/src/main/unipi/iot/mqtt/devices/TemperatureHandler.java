@@ -9,6 +9,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import com.google.gson.Gson;
 
+import main.unipi.iot.DBManager;
 import main.unipi.iot.coap.ActuatorManager;
 import main.unipi.iot.mqtt.TopicHandler;
 import main.unipi.iot.mqtt.TopicMessage;
@@ -32,7 +33,6 @@ public class TemperatureHandler implements TopicHandler {
 			Datum datum = new Datum();
 			datum.temperature = temperature;
 			datum.timestamp = System.currentTimeMillis();
-
 			data.add(datum);
 		}
 
@@ -45,12 +45,12 @@ public class TemperatureHandler implements TopicHandler {
 		}
 
 		public void clean() {
-			// ~ 30 secondi
+			// 30 seconds
 			long thirtysecondsago = System.currentTimeMillis() - 30 * 1000L;
 			data.removeIf(datum -> datum.timestamp < thirtysecondsago);
 		}
 
-		public double average() {
+		public double getAverage() {
 			return data.stream().map(datum -> (double) datum.temperature) // take only the humidity
 					.reduce(0.0d, Double::sum) / data.size();
 		}
@@ -72,16 +72,14 @@ public class TemperatureHandler implements TopicHandler {
 		TemperatureMessage message = (TemperatureMessage) parsedMessage;
 		//AcManager manager = (AcManager) actManager;
 
-		// @TODO Inserisci nella base di dati
-
 		if (!sensorsStats.containsKey(message.getSensorId()))
 			sensorsStats.put(message.getSensorId(), new Statistics());
 
 		Statistics sensorStats = sensorsStats.get(message.getSensorId());
-		double oldAvg = sensorStats.average();
+		double oldAvg = sensorStats.getAverage();
 		sensorStats.add(message.temperature);
 		sensorStats.clean();
-		double avg = sensorStats.average();
+		double avg = sensorStats.getAverage();
 		double midRange = sensorStats.midRange();
 		String mes;
 		if (avg < (sensorStats.getLowerBoundTemperature() + (midRange - sensorStats.getLowerBoundTemperature()) / 2)) {
@@ -96,7 +94,7 @@ public class TemperatureHandler implements TopicHandler {
 			mes = "OFF";
 		}
 		//manager.getAssociatedSensor(message.getSensorId()).sendMessage(mes);
-		//DBDriver.getInstance().insertTemperatureSample(message);
+		DBManager.getInstance().insertSampleTemperature(message);
 	}
 
 }
