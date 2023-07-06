@@ -35,6 +35,6 @@ public class FloatHandler implements TopicHandler {
 			spoutManager.getAssociatedSensor(message.getSensorId()).sendMessage("DOWN");
 			lastFloatLevel = currFloatLevel;
 		}
-		DBManager.getInstance().insertSampleFloat(message);
+		//DBManager.getInstance().insertSampleFloat(message);
 	}
 }

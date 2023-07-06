@@ -77,7 +77,7 @@ static struct mqtt_connection conn;
 
 PROCESS(float_process, "Float process");
 
-bool float_low = true;
+int float_low = 0;
 
 // This function is called each time occurs a MQTT event
 static void mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
@@ -163,14 +163,17 @@ PROCESS_THREAD(float_process, ev, data) {
         if(ev == button_hal_press_event) {
             btn = (button_hal_button_t *)data ;            
             printf("Press event (%s)\n", BUTTON_HAL_GET_DESCRIPTION(btn));
-            float_low = !float_low;
+            float_low++;
+	    if(float_low > 2){
+	    	float_low=0;
+	    }
 
-			leds_set(float_low ? LEDS_RED : LEDS_GREEN);
+			leds_set(float_low>0 ? (float_low==1 ? LEDS_RED : LEDS_YELLOW) : LEDS_GREEN);
 			continue;
         }
 
-        leds_set(float_low ? LEDS_RED : LEDS_GREEN);
-
+        leds_set(float_low>0 ? (float_low==1 ? LEDS_RED : LEDS_YELLOW) : LEDS_GREEN);
+			
 		if(!((ev == PROCESS_EVENT_TIMER && data == &periodic_timer) || ev == PROCESS_EVENT_POLL))
 			continue;
 		
@@ -194,9 +197,9 @@ PROCESS_THREAD(float_process, ev, data) {
 		case STATE_CONNECTED:
 			sprintf(pub_topic, "%s", "float");
 
-			LOG_INFO("float status: %s\n", float_low ? "low" : "high");
+			LOG_INFO("float status: %s - float value:%d\n", float_low==0 ? "low" : (float_low==1 ? "medium" : "high"), float_low);
 			
-			sprintf(app_buffer, "{\"node\": %d, \"isLevelLow\": %s}", 40, float_low ? "true" : "false");
+			sprintf(app_buffer, "{\"node\": %d, \"floatLevel\": %d}", 42, float_low);
 			mqtt_publish(
 				&conn, NULL, pub_topic, (uint8_t *)app_buffer,
 				strlen(app_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF
