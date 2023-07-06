@@ -20,6 +20,14 @@ CREATE TABLE `temperature`(
 	PRIMARY KEY (`id`, `timestamp`)
 );
 
+CREATE TABLE `co2`(
+	`id`		INT NOT NULL,
+	`timestamp`	TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	`value`		FLOAT NOT NULL,
+	
+	PRIMARY KEY (`id`, `timestamp`)
+);
+
 CREATE TABLE `actuator` (
     -- `id`        INT PRIMARY KEY,
     `ip`        VARBINARY(16) PRIMARY KEY,

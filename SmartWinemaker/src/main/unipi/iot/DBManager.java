@@ -90,10 +90,10 @@ public class DBManager {
 	 * this.insert("temperature", 2, attr, values); }
 	 */
 	public void insertSampleFloat(FloatMessage m) {
-		String[] attr = { "id", "float" };
+		String[] attr = { "id", "level" };
 
 		String[] values = { Long.toString(m.getSensorId()), Integer.toString(m.getValue()) };
-		this.insert("float", 2, attr, values);
+		this.insert("float_level", 2, attr, values);
 	}
 	
 	public void insertSampleCo2(Co2Message m) {
