@@ -18,32 +18,35 @@
 #define CONNECTION_TRY_INTERVAL 1
 #define REGISTRATION_TRY_INTERVAL 1
 #define SIMULATION_INTERVAL 1
-
+#define DEVICE_TYPE "{\"deviceType\": \"cooling\", \"sensorId\": 41}"
 
 /* Log configuration */
 #include "sys/log.h"
-#define LOG_MODULE "bypass"
-#define LOG_LEVEL LOG_LEVEL_DBG
-#define DEVICE_TYPE "{\"deviceType\": \"bypass\", \"sensorId\": 42}"
+#define LOG_MODULE "cooling"
+#define LOG_LEVEL LOG_LEVEL_APP
+
 #define INTERVAL_BETWEEN_CONNECTION_TESTS 1
 
-extern coap_resource_t res_bypass;
+extern coap_resource_t res_cooling;
 
+char *service_url = "/registration";
+static bool registered = false;
 
 static struct etimer connectivity_timer;
 static struct etimer wait_registration;
-static coap_endpoint_t server_ep;
-static coap_message_t request;
-char *service_url = "/registration";
-static bool registered = false;
+
+/* Declare and auto-start this file's process */
+PROCESS(cooling_server, "cooling Server");
+AUTOSTART_PROCESSES(&cooling_server);
+
 /*---------------------------------------------------------------------------*/
 static bool is_connected() {
 	if(NETSTACK_ROUTING.node_is_reachable()) {
-		LOG_INFO("The Border Router is connected!\n");
+		LOG_INFO("The Border Router is reachable\n");
 		return true;
-  	}
-
-	LOG_INFO("Waiting connection with Border Router\n");
+  	} else {
+		LOG_INFO("Waiting for connection with the Border Router\n");
+	}
 	return false;
 }
 
@@ -63,22 +66,17 @@ void client_chunk_handler(coap_message_t *response) {
 		etimer_set(&wait_registration, CLOCK_SECOND* REGISTRATION_TRY_INTERVAL);
 }
 
-/* Declare and auto-start this file's process */
-PROCESS(bypass_server, "Bypass Server");
-AUTOSTART_PROCESSES(&bypass_server);
-
-PROCESS_THREAD(bypass_server, ev, data){
+PROCESS_THREAD(cooling_server, ev, data){
 	PROCESS_BEGIN();
 
-
-	
+	static coap_endpoint_t server_ep;
+    static coap_message_t request[1]; // This way the packet can be treated as pointer as usual
 
 	PROCESS_PAUSE();
 
-	leds_set(LEDS_NUM_TO_MASK(LEDS_RED));
-
-	LOG_INFO("Starting: CoAP-Bypass\n");
-	coap_activate_resource(&res_bypass, "bypass"); 
+	LOG_INFO("Starting Cooling CoAP-Server\n");
+	coap_activate_resource(&res_cooling, "cooling"); 
+	
 
 	// try to connect to the border router
 	etimer_set(&connectivity_timer, CLOCK_SECOND * INTERVAL_BETWEEN_CONNECTION_TESTS);
@@ -89,19 +87,16 @@ PROCESS_THREAD(bypass_server, ev, data){
 	}
 
 	while(!registered) {
-		static char registrationString[100] = {0};
-    	static int registrationStringSize = 0;
-
         LOG_INFO("Sending registration message\n");
         coap_endpoint_parse(SERVER_EP, strlen(SERVER_EP), &server_ep);
         // Prepare the message
-        coap_init_message(&request, COAP_TYPE_CON, COAP_POST, 0);
-        coap_set_header_uri_path(&request, service_url);
-        coap_set_payload(&request, (uint8_t *)DEVICE_TYPE, sizeof(DEVICE_TYPE)-1);
-
-        COAP_BLOCKING_REQUEST(&server_ep, &request, client_chunk_handler);
+        coap_init_message(request, COAP_TYPE_CON, COAP_POST, 0);
+        coap_set_header_uri_path(request, service_url);
+        coap_set_payload(request, (uint8_t *)DEVICE_TYPE, sizeof(DEVICE_TYPE) - 1);
+        COAP_BLOCKING_REQUEST(&server_ep, request, client_chunk_handler);
 
         PROCESS_WAIT_UNTIL(etimer_expired(&wait_registration));
     }
+
 	PROCESS_END();
 }
