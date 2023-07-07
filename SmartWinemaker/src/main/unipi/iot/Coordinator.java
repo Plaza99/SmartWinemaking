@@ -22,6 +22,7 @@ import com.google.gson.Gson;
 
 import main.unipi.iot.coap.ActuatorManager;
 import main.unipi.iot.coap.actuators.manager.BypassManager;
+import main.unipi.iot.coap.actuators.manager.CoolingManager;
 import main.unipi.iot.mqtt.TopicHandler;
 import main.unipi.iot.mqtt.TopicMessage;
 import main.unipi.iot.mqtt.devices.Co2Handler;
@@ -43,6 +44,7 @@ public class Coordinator extends CoapServer implements MqttCallback {
 	private static final Map<String, ActuatorManager> ACTUATORS = new HashMap<String, ActuatorManager>() {
 		{
 			put("bypass", new BypassManager());
+			put("cooling",new CoolingManager());
 		}
 	};
 
