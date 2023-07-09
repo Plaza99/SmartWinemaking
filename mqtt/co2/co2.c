@@ -16,7 +16,7 @@
 #include <sys/node-id.h>
 #include <time.h>
 
-#define LOG_MODULE "humidity"
+#define LOG_MODULE "co2"
 #ifdef  MQTT_CLIENT_CONF_LOG_LEVEL
 #define LOG_LEVEL MQTT_CLIENT_CONF_LOG_LEVEL
 #else
@@ -45,8 +45,8 @@ static uint8_t state;
 #define STATE_SUBSCRIBED      	4	// Topics subscription done
 #define STATE_DISCONNECTED    	5	// Disconnected from MQTT broker
 
-PROCESS_NAME(humidity_analyzer_process);
-AUTOSTART_PROCESSES(&humidity_analyzer_process);
+PROCESS_NAME(co2_analyzer_process);
+AUTOSTART_PROCESSES(&co2_analyzer_process);
 
 /* Maximum TCP segment size for outgoing segments of our socket */
 #define MAX_TCP_SEGMENT_SIZE    32
@@ -72,44 +72,14 @@ static struct etimer periodic_timer;
 #define APP_BUFFER_SIZE 512
 static char app_buffer[APP_BUFFER_SIZE];
 
-static struct mqtt_message *msg_ptr = 0;
-
 static struct mqtt_connection conn;
 
-PROCESS(humidity_analyzer_process, "Humidity analyzer process");
+PROCESS(co2_analyzer_process, "co2 analyzer process");
 
-static bool increase_humidity = false;
-static bool decrease_humidity = false;
-#define MIN_HUMIDITY 0
-#define MAX_HUMIDITY 100
-static int humidity_percentage = 50; // we cannot use float value in the testbed
+#define MIN_CO2 0
+#define MAX_CO2 100
+static int co2_percentage = 50; //starting halfway
 static int variation = 0;
-
-// Function called for handling an incoming message
-static void pub_handler(const char *topic, uint16_t topic_len, const uint8_t *chunk, uint16_t chunk_len)
-{
-	LOG_INFO("Message received: topic='%s' (len=%u), chunk_len=%u\n", topic, topic_len, chunk_len);
-
-	if(strcmp(topic, "humidifier") != 0){
-		LOG_ERR("Topic not valid!\n");
-		return;
-	}
-	
-	LOG_INFO("Received Actuator command\n");
-	if (strcmp((const char*) chunk, "INC") == 0){
-		LOG_INFO("Switch ON humidifier\n");
-		increase_humidity = true;
-		decrease_humidity = false;	
-	}else if (strcmp((const char*) chunk, "DEC") == 0){
-		LOG_INFO("Switch ON dehumidifier\n");	
-		increase_humidity = false;
-		decrease_humidity = true;
-	}else if (strcmp((const char*) chunk, "OFF") == 0){
-		LOG_INFO("Turn OFF humidity regulator\n");
-		increase_humidity = false;
-		decrease_humidity = false;
-	}
-}
 
 // This function is called each time occurs a MQTT event
 static void mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
@@ -123,11 +93,7 @@ static void mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data
 		case MQTT_EVENT_DISCONNECTED: 
 			printf("MQTT connection disconnected. Reason: %u\n", *((mqtt_event_t *)data));
 			state = STATE_DISCONNECTED;
-			process_poll(&humidity_analyzer_process);
-			break;
-		case MQTT_EVENT_PUBLISH: 
-			msg_ptr = data;
-			pub_handler(msg_ptr->topic, strlen(msg_ptr->topic), msg_ptr->payload_chunk, msg_ptr->payload_length);
+			process_poll(&co2_analyzer_process);
 			break;
 		case MQTT_EVENT_SUBACK: 
 			#if MQTT_311
@@ -157,7 +123,7 @@ static bool have_connectivity(void)
 	return !(uip_ds6_get_global(ADDR_PREFERRED) == NULL || uip_ds6_defrt_choose() == NULL);
 }
 
-PROCESS_THREAD(humidity_analyzer_process, ev, data)
+PROCESS_THREAD(co2_analyzer_process, ev, data)
 {
 
 	PROCESS_BEGIN();
@@ -165,7 +131,8 @@ PROCESS_THREAD(humidity_analyzer_process, ev, data)
 	static char broker_address[CONFIG_IP_ADDR_STR_LEN];
 	
 	LOG_INFO("Avvio...");
-	
+	leds_set(LEDS_YELLOW);	
+
 	// Initialize the ClientID as MAC address
 	snprintf(client_id, BUFFER_SIZE, "%02x%02x%02x%02x%02x%02x",
 		     linkaddr_node_addr.u8[0], linkaddr_node_addr.u8[1],
@@ -173,7 +140,7 @@ PROCESS_THREAD(humidity_analyzer_process, ev, data)
 		     linkaddr_node_addr.u8[6], linkaddr_node_addr.u8[7]);
 
 	// Broker registration					 
-	mqtt_register(&conn, &humidity_analyzer_process, client_id, mqtt_event, MAX_TCP_SEGMENT_SIZE);
+	mqtt_register(&conn, &co2_analyzer_process, client_id, mqtt_event, MAX_TCP_SEGMENT_SIZE);
 			
 	state=STATE_INIT;
 				    
@@ -206,45 +173,34 @@ PROCESS_THREAD(humidity_analyzer_process, ev, data)
 			break;
 			case STATE_CONNECTED:
 			case STATE_SUBSCRIBED:	
-			sprintf(pub_topic, "%s", "humidity");
+			sprintf(pub_topic, "%s", "co2");
 
-			if (humidity_percentage > 58+3) {
-				increase_humidity = false;
-				decrease_humidity = true;
-			} else if (humidity_percentage < 45) {
-				increase_humidity = true;
-				decrease_humidity = false;
+			if (co2_percentage > 70) {
+				leds_set(LEDS_RED);
+			} else if (co2_percentage < 30) {
+				leds_set(LEDS_GREEN);
+			}
+			else{
+				leds_set(LEDS_YELLOW);
+			}
+
+			variation = (rand()%4)+1; 	// variation with value between [1,4]
+			if((rand()%10) < 5) { 		// 50% probability of variation being positive or negative
+				co2_percentage = co2_percentage + variation;
+			}				
+			else{
+				co2_percentage = co2_percentage - variation;
 			}
 			
-			// simulate the behavior of the sensor				
-			if (increase_humidity || decrease_humidity)
-			{
-				variation = (rand()%5)+1; 	// a value in [1,5]
-				if((rand()%10) < 8) {
-					if (increase_humidity)
-						humidity_percentage = humidity_percentage + variation;
-					else
-						humidity_percentage = humidity_percentage - variation;
-				}
-			}
-			else // humidity regulator OFF
-			{
-				// compute a probability to have a change
-				if ((rand()%10) < 3) // 30% chance that the humidity will change
-				{
-					variation = (rand()%7)-4; // a value in
-					humidity_percentage = humidity_percentage + variation;
-				}
-			}	
+			//setting limits
+			if (co2_percentage > MAX_CO2) 
+				co2_percentage = MAX_CO2; 
+			else if (co2_percentage < MIN_CO2)
+				co2_percentage = MIN_CO2;
 
-			if (humidity_percentage > MAX_HUMIDITY) // impossible behavior in a real environment
-				humidity_percentage = MAX_HUMIDITY; 
-			else if (humidity_percentage < MIN_HUMIDITY) // impossible behavior in a real environment
-				humidity_percentage = MIN_HUMIDITY;
-
-			LOG_INFO("New value of humidity: %d%%\n", humidity_percentage);
+			LOG_INFO("New value of co2: %d%%\n", co2_percentage);
 			
-			sprintf(app_buffer, "{\"node\": %d, \"humidity\": %d}", 50, humidity_percentage);
+			sprintf(app_buffer, "{\"node\": %d, \"co2\": %d}", 50, co2_percentage);
 			mqtt_publish(&conn, NULL, pub_topic, (uint8_t *)app_buffer,
 			strlen(app_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
 

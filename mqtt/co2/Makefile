@@ -1,4 +1,4 @@
-CONTIKI_PROJECT = humidity
+CONTIKI_PROJECT = co2
 all: $(CONTIKI_PROJECT)
 
 CONTIKI=/home/user/contiki-ng
