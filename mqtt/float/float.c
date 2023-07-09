@@ -41,7 +41,7 @@ static uint8_t state;
 #define STATE_NET_OK 1       // Network is initialized
 #define STATE_CONNECTING 2   // Connecting to MQTT broker
 #define STATE_CONNECTED 3    // Connection successful
-//#define STATE_SUBSCRIBED 4   // Topics subscription done
+#define STATE_SUBSCRIBED 4   // Topics subscription done
 #define STATE_DISCONNECTED 5 // Disconnected from MQTT broker
 
 PROCESS_NAME(float_process);
@@ -58,6 +58,7 @@ AUTOSTART_PROCESSES(&float_process);
 
 static char client_id[BUFFER_SIZE];
 static char pub_topic[BUFFER_SIZE];
+static char sub_topic[BUFFER_SIZE];
 
 // Periodic timer to check the state of the MQTT client
 #define STATE_MACHINE_PERIODIC (CLOCK_SECOND >> 1)
@@ -76,8 +77,27 @@ static struct mqtt_connection conn;
 
 
 PROCESS(float_process, "Float process");
+static bool bypass = false;
+static int float_low = 0;
 
-int float_low = 0;
+// Function called for handling an incoming message
+static void pub_handler(const char *topic, uint16_t topic_len, const uint8_t *chunk, uint16_t chunk_len) {
+	LOG_INFO("Message received: topic='%s' (len=%u), chunk_len=%u\n", topic, topic_len, chunk_len);
+
+	if(strcmp(topic, "bypass") != 0) {
+		LOG_ERR("Topic not valid!\n");
+		return;
+	}
+	
+	LOG_INFO("Received Actuator command\n");
+	if(strcmp((const char*) chunk, "UP") == 0) {
+		LOG_INFO("Turned DOWN bypass\n");	
+		bypass=true;	
+	} else if(strcmp((const char*) chunk, "DOWN") == 0)  {
+		LOG_INFO("Turned DOWN bypass\n");	
+		bypass=false;
+	}	
+}
 
 // This function is called each time occurs a MQTT event
 static void mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
@@ -91,6 +111,7 @@ static void mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data
     case MQTT_EVENT_DISCONNECTED:
         printf("MQTT connection disconnected. Reason: %u\n", *((mqtt_event_t *)data));
         state = STATE_DISCONNECTED;
+	LOG_INFO("MQTT connection disconnected. Reason: %u\n", *((mqtt_event_t *)data));
         process_poll(&float_process);
         break;
     case MQTT_EVENT_PUBLISH:
@@ -99,6 +120,7 @@ static void mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data
             "Message received: topic='%s' (len=%u), chunk_len=%u\n",
             msg_ptr->topic, (unsigned int)strlen(msg_ptr->topic), msg_ptr->payload_length
         );
+	pub_handler(msg_ptr->topic, strlen(msg_ptr->topic), msg_ptr->payload_chunk, msg_ptr->payload_length);
         break;
     case MQTT_EVENT_SUBACK:
 #if MQTT_311
@@ -131,7 +153,7 @@ PROCESS_THREAD(float_process, ev, data) {
 	PROCESS_BEGIN();
 
 	static button_hal_button_t *btn;
-	//static mqtt_status_t status;
+	static mqtt_status_t status;
 	static char broker_address[CONFIG_IP_ADDR_STR_LEN];
 	
 	btn = button_hal_get_by_index(0);
@@ -163,12 +185,12 @@ PROCESS_THREAD(float_process, ev, data) {
         if(ev == button_hal_press_event) {
             btn = (button_hal_button_t *)data ;            
             printf("Press event (%s)\n", BUTTON_HAL_GET_DESCRIPTION(btn));
-            float_low++;
-	    if(float_low > 2){
+            float_low+=30;
+	    if(float_low > 100){
 	    	float_low=0;
 	    }
 
-			leds_set(float_low>0 ? (float_low==1 ? LEDS_RED : LEDS_YELLOW) : LEDS_GREEN);
+			leds_set(float_low>0 ? (float_low>60 ? LEDS_RED : LEDS_YELLOW) : LEDS_GREEN);
 			continue;
         }
 
@@ -195,17 +217,31 @@ PROCESS_THREAD(float_process, ev, data) {
 		  	state = STATE_CONNECTING;
 		break;
 		case STATE_CONNECTED:
-			sprintf(pub_topic, "%s", "float");
+			strcpy(sub_topic,"bypass");
+				status = mqtt_subscribe(&conn, NULL, sub_topic, MQTT_QOS_LEVEL_0);
+				if(status == MQTT_STATUS_OUT_QUEUE_FULL) {
+					LOG_ERR("Tried to subscribe but command queue was full!\n");
+					PROCESS_EXIT();
+				}
+				state = STATE_SUBSCRIBED;
 
-			LOG_INFO("float status: %s - float value:%d\n", float_low==0 ? "low" : (float_low==1 ? "medium" : "high"), float_low);
+		break; 
+		case STATE_SUBSCRIBED:
+			sprintf(pub_topic, "%s", "float");
+			if(!bypass){
+				float_low++;
+			}
+			else{
+				float_low-=20;
+			}
+			LOG_INFO("float status: %s - float value:%d\n", "working", float_low);
 			
 			sprintf(app_buffer, "{\"node\": %d, \"floatLevel\": %d}", 42, float_low);
 			mqtt_publish(
 				&conn, NULL, pub_topic, (uint8_t *)app_buffer,
 				strlen(app_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF
 			);
-
-		break; 
+			break;
 		case STATE_DISCONNECTED:
 			LOG_ERR("Disconnected from MQTT broker\n");	
 			state = STATE_INIT;
