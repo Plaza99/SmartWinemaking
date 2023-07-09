@@ -1,10 +1,5 @@
 package main.unipi.iot.mqtt.devices;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import com.google.gson.Gson;
@@ -16,83 +11,53 @@ import main.unipi.iot.mqtt.devices.messages.TemperatureMessage;
 public class TemperatureHandler {
 
 	private static final Gson parser = new Gson();
+	private int lowerBoundTemperature = 23;
+	private int upperBoundTemperature = 27;
 
-	private static class Statistics {
-		public static class Datum {
-			public int temperature;
-			public long timestamp;
+	public void setLowerBoundTemperature(int lowerBoundTemperature) {
+		if (lowerBoundTemperature < this.upperBoundTemperature) {
+			System.out.println("CONSOLE - Setted lower bound temperature to: " + lowerBoundTemperature);
+			this.lowerBoundTemperature = lowerBoundTemperature;
 		}
-
-		public static final int lowerBoundTemperature = 15;
-		public static final int upperBoundTemperature = 25;
-		private final List<Datum> data = new ArrayList<>();
-
-		public void add(int temperature) {
-			Datum datum = new Datum();
-			datum.temperature = temperature;
-			datum.timestamp = System.currentTimeMillis();
-			data.add(datum);
-		}
-
-		public int getLowerBoundTemperature() {
-			return lowerBoundTemperature;
-		}
-
-		public int getUpperBoundTemperature() {
-			return upperBoundTemperature;
-		}
-
-		public void clean() {
-			// 30 seconds
-			long thirtysecondsago = System.currentTimeMillis() - 30 * 1000L;
-			data.removeIf(datum -> datum.timestamp < thirtysecondsago);
-		}
-
-		public double getAverage() {
-			return data.stream().map(datum -> (double) datum.temperature) // take only the humidity
-					.reduce(0.0d, Double::sum) / data.size();
-		}
-
-		public double midRange() {
-			return (lowerBoundTemperature + upperBoundTemperature) / 2;
+		else {
+			System.out.println("CONSOLE - not possible to set lower bound higher or equal than upper bound ("+this.upperBoundTemperature+")");
 		}
 	}
 
-	private final Map<Long, Statistics> sensorsStats = new HashMap<>();
+	public void setUpperBoundTemperature(int upperBoundTemperature) {
+		if (this.lowerBoundTemperature < upperBoundTemperature) {
+			System.out.println("CONSOLE - Setted upper bound temperature to: " + upperBoundTemperature);
+			this.upperBoundTemperature = upperBoundTemperature;
+		}
+		else {
+			System.out.println("CONSOLE - not possible to set upper bound below or equal than lower bound ("+this.lowerBoundTemperature+")");
+		}
+	}
+	
+	public int getLowerBoundTemperature() {
+		return lowerBoundTemperature;
+	}
 
+	public int getUpperBoundTemperature() {
+		return upperBoundTemperature;
+	}
 	
 	public TemperatureMessage parse(MqttMessage message) {
 		return parser.fromJson(new String(message.getPayload()), TemperatureMessage.class);
 	}
 
-	
 	public void callback(TemperatureMessage parsedMessage, CoolingManager actManager) {
-		TemperatureMessage message = (TemperatureMessage) parsedMessage;
-		CoolingManager manager = (CoolingManager) actManager;
 
-		if (!sensorsStats.containsKey(message.getSensorId()))
-			sensorsStats.put(message.getSensorId(), new Statistics());
+		int value = parsedMessage.getValue();
+		String message = "";
 
-		Statistics sensorStats = sensorsStats.get(message.getSensorId());
-		double oldAvg = sensorStats.getAverage();
-		sensorStats.add(message.temperature);
-		sensorStats.clean();
-		double avg = sensorStats.getAverage();
-		double midRange = sensorStats.midRange();
-		String mes;
-		if (avg < (sensorStats.getLowerBoundTemperature() + (midRange - sensorStats.getLowerBoundTemperature()) / 2)) {
-			// INC
-			mes = "ON";
-		} else if (avg > (sensorStats.getUpperBoundTemperature()
-				- (sensorStats.getUpperBoundTemperature() - midRange) / 2)) {
-			// DEC
-			mes = "DEC";
-		} else {
-			// OFF
-			mes = "OFF";
+		if (value > upperBoundTemperature) { 		// turn on Cooling system
+			message = "ON";
+		} else if (value < lowerBoundTemperature) { // turn off Cooling system
+			message = "OFF";
 		}
-		//manager.getAssociatedSensor(message.getSensorId()).sendMessage(mes);
-		DBManager.getInstance().insertSampleTemperature(message);
+		actManager.getAssociatedSensor(parsedMessage.getSensorId()).sendMessage(message);
+		DBManager.getInstance().insertSampleTemperature(parsedMessage);
 	}
 
 }

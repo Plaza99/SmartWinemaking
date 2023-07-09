@@ -53,7 +53,7 @@ public class DBManager {
 			}
 		}
 		statementString += ")";
-		System.out.println(statementString);
+		System.out.println("DATABASE - "+statementString);
 		try (Connection connection = getConnection();
 				PreparedStatement statement = connection.prepareStatement(statementString);) {
 			statement.executeUpdate();

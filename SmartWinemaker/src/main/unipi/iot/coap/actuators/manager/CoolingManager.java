@@ -3,7 +3,6 @@ package main.unipi.iot.coap.actuators.manager;
 import java.util.HashMap;
 import java.util.Map;
 
-import main.unipi.iot.coap.actuators.Bypass;
 import main.unipi.iot.coap.actuators.Cooling;
 
 public class CoolingManager{

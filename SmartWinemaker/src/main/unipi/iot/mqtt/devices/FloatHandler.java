@@ -10,24 +10,55 @@ import main.unipi.iot.mqtt.devices.messages.FloatMessage;
 public class FloatHandler {
 
 	private static final Gson parser = new Gson();
-	private static int maxFloatLevel=99;
-	private static int minFloatLevel=1;
 	private int lastFloatLevel = 0;
+	private int activationLevelUpperBound = 70;
+	private int activationLevelLowerBound = 30;
 
+	public int getActivationLevelUpperBound() {
+		return activationLevelUpperBound;
+	}
+	
+	public int getActivationLevelLowerBound() {
+		return activationLevelLowerBound;
+	}
+
+	public void setLastFloatLevel(int lastFloatLevel) {
+		this.lastFloatLevel = lastFloatLevel;
+	}
+
+	public void setActivationLevelUpperBound(int activationLevelUpperBound) {
+		if (this.activationLevelLowerBound < activationLevelUpperBound) {
+			System.out.println("CONSOLE - Setted activation level upper bound to: " + activationLevelUpperBound);
+			this.activationLevelUpperBound = activationLevelUpperBound;
+		}
+		else {
+			System.out.println("CONSOLE - not possible to set upper activation level below or equal than lower bound ("+this.activationLevelLowerBound+")");
+		}
+	}
+	
+	public void setActivationLevelLowerBound(int activationLevelLowerBound) {
+		if (activationLevelLowerBound < this.activationLevelUpperBound) {
+			System.out.println("CONSOLE - Setted activation level lower bound to: " + activationLevelLowerBound);
+			this.activationLevelLowerBound = activationLevelLowerBound;
+		}
+		else {
+			System.out.println("CONSOLE - not possible to set lower activation level higher or equal than upper bound ("+this.activationLevelUpperBound+")");
+		}
+	}
 	
 	public FloatMessage parse(MqttMessage message) {
 		return parser.fromJson(new String(message.getPayload()), FloatMessage.class);
 	}
 
-	
 	public void callback(FloatMessage message, BypassManager actManager) {
 		System.out.println("Current float value: "+ message.getValue() + " - Last float level: " + lastFloatLevel);
 		int currFloatLevel = message.getValue();
 		
-		if (currFloatLevel == 2 && currFloatLevel != lastFloatLevel) { // Float level: high
+		//bypass activation depending on 'activationLevel' setting
+		if (currFloatLevel > activationLevelUpperBound && currFloatLevel > lastFloatLevel) { 		// Float level: high 
 			actManager.getAssociatedSensor(message.getSensorId()).sendMessage("UP");
 			
-		} else if (currFloatLevel == 0 && currFloatLevel != lastFloatLevel) { // Float level: low
+		} else if (currFloatLevel < activationLevelLowerBound && currFloatLevel < lastFloatLevel) {	// Float level: low
 			actManager.getAssociatedSensor(message.getSensorId()).sendMessage("DOWN");
 		}
 		lastFloatLevel = currFloatLevel;
