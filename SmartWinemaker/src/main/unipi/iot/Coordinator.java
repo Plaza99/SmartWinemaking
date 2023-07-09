@@ -4,8 +4,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapServer;
@@ -31,7 +29,7 @@ import main.unipi.iot.mqtt.devices.messages.TemperatureMessage;
 public class Coordinator extends CoapServer implements MqttCallback {
 	private static final String BROKER = "tcp://[::1]:1883";
 	private static final String CLIENT_ID = "SmartWinemaker";
-	private static final BypassManager bpm =new BypassManager();
+	private static final BypassManager bypassManager = new BypassManager();
 	private static final CoolingManager cm= new CoolingManager();
 	private static final FloatHandler fh=new FloatHandler();
 	private static final TemperatureHandler th=new TemperatureHandler();
@@ -88,10 +86,10 @@ public class Coordinator extends CoapServer implements MqttCallback {
 				System.out.println("New actuator at " + ip + " its sensor is " + m.sensorId + " payload is "
 						+ exchange.getRequestText());
 				//ACTUATORS.get(m.deviceType).registerNewActuator(m.sensorId, ip);
-				if(m.deviceType.equals("Bypass")){
-					bpm.registerNewActuator(m.sensorId, ip);
+				if(m.deviceType.equals("bypass")){
+					bypassManager.registerNewActuator(m.sensorId, ip);
 				}
-				if(m.deviceType.equals("Cooling")){
+				if(m.deviceType.equals("cooling")){
 					cm.registerNewActuator(m.sensorId, ip);
 				}
 
@@ -115,10 +113,10 @@ public class Coordinator extends CoapServer implements MqttCallback {
 					"Actuator at " + ip + " is leaving the network, leaving sensor " + m.sensorId + " orphan!");
 
 			//ACTUATORS.get(m.deviceType).deleteActuator(m.sensorId);
-			if(m.deviceType.equals("Bypass")){
-				bpm.deleteActuator(m.sensorId);
+			if(m.deviceType.equals("bypass")){
+				bypassManager.deleteActuator(m.sensorId);
 			}
-			if(m.deviceType.equals("Cooling")){
+			if(m.deviceType.equals("cooling")){
 				cm.deleteActuator(m.sensorId);
 			}
 		}
@@ -151,9 +149,9 @@ public class Coordinator extends CoapServer implements MqttCallback {
 			System.out.println(
 				"Incoming message from " + m.getSensorId() + " with topic " + topic + " value=" + m.getValue());
 			try {
-				fh.callback(m, bpm);
+				fh.callback(m, bypassManager);
 			} catch (Throwable e) {
-				System.out.println("Failed to run callback() bc " + e.getMessage());
+				e.printStackTrace();
 			}
 		}
 		if(topic.equals("temperature")) {

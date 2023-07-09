@@ -20,19 +20,18 @@ public class FloatHandler {
 	}
 
 	
-	public void callback(FloatMessage parsedMessage, BypassManager actManager) {
-		FloatMessage message = (FloatMessage) parsedMessage;
-		BypassManager spoutManager = (BypassManager) actManager;
-		System.out.println(message + " - last float level: " + lastFloatLevel);
-		int currFloatLevel = parsedMessage.getValue();
-
+	public void callback(FloatMessage message, BypassManager actManager) {
+		System.out.println("Current float value: "+ message.getValue() + " - Last float level: " + lastFloatLevel);
+		int currFloatLevel = message.getValue();
+		
 		if (currFloatLevel == 2 && currFloatLevel != lastFloatLevel) { // Float level: high
-			spoutManager.getAssociatedSensor(message.getSensorId()).sendMessage("UP");
-			lastFloatLevel = currFloatLevel;
+			actManager.getAssociatedSensor(message.getSensorId()).sendMessage("UP");
+			
 		} else if (currFloatLevel == 0 && currFloatLevel != lastFloatLevel) { // Float level: low
-			spoutManager.getAssociatedSensor(message.getSensorId()).sendMessage("DOWN");
-			lastFloatLevel = currFloatLevel;
+			actManager.getAssociatedSensor(message.getSensorId()).sendMessage("DOWN");
 		}
+		lastFloatLevel = currFloatLevel;
+		
 		DBManager.getInstance().insertSampleFloat(message);
 	}
 }
