@@ -91,7 +91,7 @@ static void pub_handler(const char *topic, uint16_t topic_len, const uint8_t *ch
 	
 	LOG_INFO("Received Actuator command\n");
 	if(strcmp((const char*) chunk, "UP") == 0) {
-		LOG_INFO("Turned DOWN bypass\n");	
+		LOG_INFO("Turned UP bypass\n");	
 		bypass=true;	
 	} else if(strcmp((const char*) chunk, "DOWN") == 0)  {
 		LOG_INFO("Turned DOWN bypass\n");	

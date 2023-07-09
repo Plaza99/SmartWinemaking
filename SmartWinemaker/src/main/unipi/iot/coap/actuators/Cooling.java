@@ -16,7 +16,6 @@ public class Cooling {
     }
 
     public void sendMessage(String message) {
-        System.out.println(message);
         coapClient.put(message, MediaTypeRegistry.TEXT_PLAIN);
     }
 

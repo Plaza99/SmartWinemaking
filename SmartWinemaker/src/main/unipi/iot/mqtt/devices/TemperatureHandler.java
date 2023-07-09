@@ -47,19 +47,18 @@ public class TemperatureHandler {
 	}
 
 	public int callback(TemperatureMessage parsedMessage, CoolingManager actManager) {
-
+		
 		int value = parsedMessage.getValue();
-		String message = "";
 		int ret=0;
 		
 		if (value > upperBoundTemperature) { 		// turn on Cooling system
-			message = "ON";
+			actManager.getAssociatedSensor(parsedMessage.getSensorId()).sendMessage("ON");
 			ret=2;
 		} else if (value < lowerBoundTemperature) { // turn off Cooling system
-			message = "OFF";
+			actManager.getAssociatedSensor(parsedMessage.getSensorId()).sendMessage("OFF");
 			ret=1;
 		}
-		actManager.getAssociatedSensor(parsedMessage.getSensorId()).sendMessage(message);
+		
 		DBManager.getInstance().insertSampleTemperature(parsedMessage);
 		return ret;
 	}

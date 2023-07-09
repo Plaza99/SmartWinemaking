@@ -83,7 +83,7 @@ public class Coordinator extends CoapServer implements MqttCallback {
 					coolingManager.registerNewActuator(m.sensorId, ip);
 				}
 
-				//TODO DBManager.getInstance().registerActuator(ip, m.deviceType);
+				// TODO DBManager.getInstance().registerActuator(ip, m.deviceType);
 
 				exchange.respond(CoAP.ResponseCode.CREATED, "Success".getBytes(StandardCharsets.UTF_8));
 			} catch (Throwable e) {
@@ -101,7 +101,7 @@ public class Coordinator extends CoapServer implements MqttCallback {
 			System.out.println(
 					"Actuator at " + ip + " is leaving the network, leaving sensor " + m.sensorId + " orphan!");
 
-			if(m.deviceType.equals("bypass")){
+			if (m.deviceType.equals("bypass")) {
 				bypassManager.deleteActuator(m.sensorId);
 			}
 
@@ -127,32 +127,28 @@ public class Coordinator extends CoapServer implements MqttCallback {
 			System.out.println(
 					"Incoming message from " + m.getSensorId() + " with topic " + topic + " value = " + m.getValue());
 			try {
-				int res=floatHandler.callback(m, bypassManager);
-				if(res>0) {
-					if(res==2) {
-						publish("bypass","UP");
-					}
-					else if(res==1){
-						publish("bypass","DOWN");
+				int res = floatHandler.callback(m, bypassManager);
+				if (res > 0) {
+					if (res == 2) {
+						publish("bypass", "UP");
+					} else if (res == 1) {
+						publish("bypass", "DOWN");
 					}
 				}
-			} 
-			catch (Throwable e) {
+			} catch (Throwable e) {
 				System.out.println("Failed to run callback() bc " + e.getMessage());
 			}
-		}
-		else if (topic.equals("temperature")) {
+		} else if (topic.equals("temperature")) {
 			TemperatureMessage m = temperatureHandler.parse(mqttMessage);
 			System.out.println(
 					"Incoming message from " + m.getSensorId() + " with topic " + topic + " value = " + m.getValue());
 			try {
-				int res=temperatureHandler.callback(m, coolingManager);
-				if(res>0) {
-					if(res==2) {
-						publish("cooling","ON");
-					}
-					else if(res==1){
-						publish("cooling","OFF");
+				int res = temperatureHandler.callback(m, coolingManager);
+				if (res > 0) {
+					if (res == 2) {
+						publish("cooling", "ON");
+					} else if (res == 1) {
+						publish("cooling", "OFF");
 					}
 				}
 			} catch (Throwable e) {
@@ -172,17 +168,15 @@ public class Coordinator extends CoapServer implements MqttCallback {
 
 	}
 
-	private void publish(String topic, String content) throws MqttException{
+	private void publish(String topic, String content) throws MqttException {
 		try {
 			MqttMessage message = new MqttMessage(content.getBytes());
-			this.mqttClient.publish(topic, message);
-			System.out.println("sent publish on "+topic+" content:"+content);
-		} catch(MqttException me) {
+			mqttClient.publish(topic, message);
+			System.out.println("Sent publish on " + topic + " with content:" + content);
+		} catch (MqttException me) {
 			me.printStackTrace();
 		}
-		}
-
-		
+	}
 
 	@Override
 	public void deliveryComplete(IMqttDeliveryToken token) {
@@ -201,7 +195,7 @@ public class Coordinator extends CoapServer implements MqttCallback {
 					mqttClient.subscribe(topic);
 					System.out.println("Subscribed to: " + topic);
 				}
-				
+
 			} catch (MqttException me) {
 				System.out.println("I could not connect, Retrying ...");
 			}
