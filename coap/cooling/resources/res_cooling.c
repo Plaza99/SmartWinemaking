@@ -19,7 +19,7 @@ RESOURCE(res_cooling,
          bypass_put_handler,
          NULL);
 
-bool bypass_up = false;
+bool cool_on = false;
 
 static void bypass_put_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset) {
 	size_t len = 0;
@@ -29,14 +29,14 @@ static void bypass_put_handler(coap_message_t *request, coap_message_t *response
 	if(len <= 0 || len > 4)
 		goto error;
 	
-	if(strncmp(text, "UP", len) == 0 && !bypass_up) {
-		bypass_up = true;
+	if(strncmp(text, "ON", len) == 0 && !cool_on) {
+		cool_on = true;
 		leds_set(LEDS_GREEN);
-		LOG_INFO("COOLING UP\n");
-	} else if(strncmp(text, "DOWN", len) == 0 && bypass_up) {
-		bypass_up = false;
+		LOG_INFO("COOLING ON\n");
+	} else if(strncmp(text, "OFF", len) == 0 && cool_on) {
+		cool_on = false;
 		leds_set(LEDS_RED);
-		LOG_INFO("COOLING DOWN\n");
+		LOG_INFO("COOLING OFF\n");
 	}
 	else
 		goto error;
