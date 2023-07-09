@@ -20,6 +20,7 @@ public class FloatHandler {
 	}
 
 	
+<<<<<<< Updated upstream
 	public void callback(FloatMessage message, BypassManager actManager) {
 		System.out.println("Current float value: "+ message.getValue() + " - Last float level: " + lastFloatLevel);
 		int currFloatLevel = message.getValue();
@@ -32,6 +33,22 @@ public class FloatHandler {
 		}
 		lastFloatLevel = currFloatLevel;
 		
+=======
+	public int callback(FloatMessage message, BypassManager actManager) {
+		System.out.println("Current float value: "+ message.getValue() + " - Last float level: " + lastFloatLevel);
+		int currFloatLevel = message.getValue();
+		
+		if (currFloatLevel > 70 && currFloatLevel != lastFloatLevel) { // Float level: high
+			actManager.getAssociatedSensor(message.getSensorId()).sendMessage("UP");
+			return 2;
+		} else if (currFloatLevel < 40  && currFloatLevel != lastFloatLevel) { // Float level: low
+			actManager.getAssociatedSensor(message.getSensorId()).sendMessage("DOWN");
+			return 1;
+		}
+		
+		lastFloatLevel = currFloatLevel;
+>>>>>>> Stashed changes
 		DBManager.getInstance().insertSampleFloat(message);
+		return 0;
 	}
 }

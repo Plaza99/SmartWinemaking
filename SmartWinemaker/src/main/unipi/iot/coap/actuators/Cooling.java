@@ -12,7 +12,11 @@ public class Cooling {
     public Cooling(String ip) {
         this.ip = ip;
         System.out.println("Cooling with ip: "+ip);
+<<<<<<< Updated upstream
         coapClient = new CoapClient("coap://[" + ip + "]/bypass");
+=======
+        coapClient = new CoapClient("coap://[" + ip + "]/cooling");
+>>>>>>> Stashed changes
     }
 
     public void sendMessage(String message) {

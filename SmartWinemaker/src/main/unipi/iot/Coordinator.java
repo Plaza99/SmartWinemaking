@@ -29,7 +29,11 @@ import main.unipi.iot.mqtt.devices.messages.TemperatureMessage;
 public class Coordinator extends CoapServer implements MqttCallback {
 	private static final String BROKER = "tcp://[::1]:1883";
 	private static final String CLIENT_ID = "SmartWinemaker";
+<<<<<<< Updated upstream
 	private static final BypassManager bypassManager = new BypassManager();
+=======
+	private static final BypassManager bpm =new BypassManager();
+>>>>>>> Stashed changes
 	private static final CoolingManager cm= new CoolingManager();
 	private static final FloatHandler fh=new FloatHandler();
 	private static final TemperatureHandler th=new TemperatureHandler();
@@ -87,7 +91,11 @@ public class Coordinator extends CoapServer implements MqttCallback {
 						+ exchange.getRequestText());
 				//ACTUATORS.get(m.deviceType).registerNewActuator(m.sensorId, ip);
 				if(m.deviceType.equals("bypass")){
+<<<<<<< Updated upstream
 					bypassManager.registerNewActuator(m.sensorId, ip);
+=======
+					bpm.registerNewActuator(m.sensorId, ip);
+>>>>>>> Stashed changes
 				}
 				if(m.deviceType.equals("cooling")){
 					cm.registerNewActuator(m.sensorId, ip);
@@ -114,7 +122,11 @@ public class Coordinator extends CoapServer implements MqttCallback {
 
 			//ACTUATORS.get(m.deviceType).deleteActuator(m.sensorId);
 			if(m.deviceType.equals("bypass")){
+<<<<<<< Updated upstream
 				bypassManager.deleteActuator(m.sensorId);
+=======
+				bpm.deleteActuator(m.sensorId);
+>>>>>>> Stashed changes
 			}
 			if(m.deviceType.equals("cooling")){
 				cm.deleteActuator(m.sensorId);
@@ -149,10 +161,54 @@ public class Coordinator extends CoapServer implements MqttCallback {
 			System.out.println(
 				"Incoming message from " + m.getSensorId() + " with topic " + topic + " value=" + m.getValue());
 			try {
+<<<<<<< Updated upstream
 				fh.callback(m, bypassManager);
 			} catch (Throwable e) {
 				e.printStackTrace();
 			}
+=======
+				int res=fh.callback(m, bpm);
+				if(res>0) {
+					if(res==2) {
+						publish("bypass","UP");
+					}
+					else if(res==1){
+						publish("bypass","DOWN");
+					}
+				}
+			} catch (Throwable e) {
+				System.out.println("Failed to run callback() bc " + e.getMessage());
+			}
+		}
+		if(topic.equals("temperature")) {
+			TemperatureMessage m=th.parse(mqttMessage);
+			System.out.println(
+				"Incoming message from " + m.getSensorId() + " with topic " + topic + " value=" + m.getValue());
+			try {
+				int res=th.callback(m, cm);
+				if(res>0) {
+					if(res==2) {
+						publish("cooling","ON");
+					}
+					else if(res==1){
+						publish("cooling","OFF");
+					}
+				}
+			} catch (Throwable e) {
+				System.out.println("Failed to run callback() bc " + e.getMessage());
+			}
+		}
+		
+	}
+
+	private void publish(String topic, String content) throws MqttException{
+		try {
+			MqttMessage message = new MqttMessage(content.getBytes());
+			this.mqttClient.publish(topic, message);
+			System.out.println("Ho mandato una publish");
+		} catch(MqttException me) {
+			me.printStackTrace();
+>>>>>>> Stashed changes
 		}
 		if(topic.equals("temperature")) {
 			TemperatureMessage m=th.parse(mqttMessage);
@@ -185,6 +241,7 @@ public class Coordinator extends CoapServer implements MqttCallback {
 					mqttClient.subscribe(topic);
 					System.out.println("Subscribed to: " + topic);
 				}
+				
 			} catch (MqttException me) {
 				System.out.println("I could not connect, Retrying ...");
 			}
