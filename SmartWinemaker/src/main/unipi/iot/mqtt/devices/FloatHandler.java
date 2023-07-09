@@ -50,19 +50,21 @@ public class FloatHandler {
 		return parser.fromJson(new String(message.getPayload()), FloatMessage.class);
 	}
 
-	public void callback(FloatMessage message, BypassManager actManager) {
+	public int callback(FloatMessage message, BypassManager actManager) {
 		System.out.println("Current float value: "+ message.getValue() + " - Last float level: " + lastFloatLevel);
 		int currFloatLevel = message.getValue();
 		
 		//bypass activation depending on 'activationLevel' setting
 		if (currFloatLevel > activationLevelUpperBound && currFloatLevel > lastFloatLevel) { 		// Float level: high 
 			actManager.getAssociatedSensor(message.getSensorId()).sendMessage("UP");
+			return 2;
 			
 		} else if (currFloatLevel < activationLevelLowerBound && currFloatLevel < lastFloatLevel) {	// Float level: low
 			actManager.getAssociatedSensor(message.getSensorId()).sendMessage("DOWN");
+			return 1;
 		}
 		lastFloatLevel = currFloatLevel;
-		
 		DBManager.getInstance().insertSampleFloat(message);
+		return 0;
 	}
 }

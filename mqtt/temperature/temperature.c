@@ -210,7 +210,7 @@ PROCESS_THREAD(process_for_temperature_sensor, ev, data) {
 				PROCESS_EXIT();
 			}
 			state = STATE_SUBSCRIBED;
-		// no break
+			break;
 		case STATE_SUBSCRIBED:	
 			sprintf(pub_topic, "%s", "temperature");
 			
