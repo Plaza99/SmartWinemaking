@@ -3,14 +3,12 @@ package main.unipi.iot.coap.actuators.manager;
 import java.util.HashMap;
 import java.util.Map;
 
-import main.unipi.iot.coap.Actuator;
-import main.unipi.iot.coap.ActuatorManager;
 import main.unipi.iot.coap.actuators.Bypass;
 
-public class BypassManager implements ActuatorManager{
-	private final Map<Long, Actuator> sensorsToActuators = new HashMap<Long, Actuator>();
+public class BypassManager{
+	private final Map<Long, Bypass> sensorsToActuators = new HashMap<Long, Bypass>();
 
-	public Actuator getAssociatedSensor(long id) {
+	public Bypass getAssociatedSensor(long id) {
 		return sensorsToActuators.get(id);
 	}
 

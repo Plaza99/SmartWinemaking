@@ -10,12 +10,9 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import com.google.gson.Gson;
 
 import main.unipi.iot.DBManager;
-import main.unipi.iot.coap.ActuatorManager;
-import main.unipi.iot.mqtt.TopicHandler;
-import main.unipi.iot.mqtt.TopicMessage;
 import main.unipi.iot.mqtt.devices.messages.Co2Message;
 
-public class Co2Handler implements TopicHandler {
+public class Co2Handler  {
 	public static int lowerBoundHumidity = 40;
 	public static int upperBoundHumidity = 60;
 	private static final Gson parser = new Gson();
@@ -45,13 +42,13 @@ public class Co2Handler implements TopicHandler {
 
 	private final Map<Long, Co2Handler.Statistics> sensorsStats = new HashMap<>();
 
-	@Override
-	public TopicMessage parse(MqttMessage message) {
+	
+	public Co2Message parse(MqttMessage message) {
 		return parser.fromJson(new String(message.getPayload()), Co2Message.class);
 	}
 
-	@Override
-	public void callback(TopicMessage parsedMessage, ActuatorManager actManager) {
+	
+	public void callback(Co2Message parsedMessage) {
 		Co2Message message = (Co2Message) parsedMessage;
 		if (!sensorsStats.containsKey(message.getSensorId()))
 			sensorsStats.put(message.getSensorId(), new Statistics());

@@ -20,20 +20,24 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import com.google.gson.Gson;
 
-import main.unipi.iot.coap.ActuatorManager;
 import main.unipi.iot.coap.actuators.manager.BypassManager;
 import main.unipi.iot.coap.actuators.manager.CoolingManager;
-import main.unipi.iot.mqtt.TopicHandler;
-import main.unipi.iot.mqtt.TopicMessage;
 import main.unipi.iot.mqtt.devices.Co2Handler;
 import main.unipi.iot.mqtt.devices.FloatHandler;
 import main.unipi.iot.mqtt.devices.TemperatureHandler;
+import main.unipi.iot.mqtt.devices.messages.FloatMessage;
+import main.unipi.iot.mqtt.devices.messages.TemperatureMessage;
 
 public class Coordinator extends CoapServer implements MqttCallback {
 	private static final String BROKER = "tcp://[::1]:1883";
 	private static final String CLIENT_ID = "SmartWinemaker";
-
-	private static final Map<String, TopicHandler> TOPICS = new HashMap<String, TopicHandler>() {
+	private static final BypassManager bpm =new BypassManager();
+	private static final CoolingManager cm= new CoolingManager();
+	private static final FloatHandler fh=new FloatHandler();
+	private static final TemperatureHandler th=new TemperatureHandler();
+	private static final Co2Handler co2h=new Co2Handler();
+	
+/*	private static final Map<String, TopicHandler> TOPICS = new HashMap<String, TopicHandler>() {
 		{
 			put("float", new FloatHandler());
 			put("temperature", new TemperatureHandler());
@@ -61,7 +65,7 @@ public class Coordinator extends CoapServer implements MqttCallback {
 	public ActuatorManager getActuatorManager(String t) {
 		return ACTUATORS.get(t);
 	}
-
+*/
 	private static class CoapRegistrationResource extends CoapResource {
 		public CoapRegistrationResource() {
 			super("registration");
@@ -83,7 +87,13 @@ public class Coordinator extends CoapServer implements MqttCallback {
 
 				System.out.println("New actuator at " + ip + " its sensor is " + m.sensorId + " payload is "
 						+ exchange.getRequestText());
-				ACTUATORS.get(m.deviceType).registerNewActuator(m.sensorId, ip);
+				//ACTUATORS.get(m.deviceType).registerNewActuator(m.sensorId, ip);
+				if(m.deviceType.equals("Bypass")){
+					bpm.registerNewActuator(m.sensorId, ip);
+				}
+				if(m.deviceType.equals("Cooling")){
+					cm.registerNewActuator(m.sensorId, ip);
+				}
 
 				// DBDriver.getInstance().registerActuator(ip, m.deviceType);
 
@@ -104,7 +114,13 @@ public class Coordinator extends CoapServer implements MqttCallback {
 			System.out.println(
 					"Actuator at " + ip + " is leaving the network, leaving sensor " + m.sensorId + " orphan!");
 
-			ACTUATORS.get(m.deviceType).deleteActuator(m.sensorId);
+			//ACTUATORS.get(m.deviceType).deleteActuator(m.sensorId);
+			if(m.deviceType.equals("Bypass")){
+				bpm.deleteActuator(m.sensorId);
+			}
+			if(m.deviceType.equals("Cooling")){
+				cm.deleteActuator(m.sensorId);
+			}
 		}
 	}
 
@@ -118,7 +134,7 @@ public class Coordinator extends CoapServer implements MqttCallback {
 	}
 
 	public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
-		TopicHandler manager = TOPICS.get(topic);
+		/*TopicHandler manager = TOPICS.get(topic);
 		TopicMessage m = manager.parse(mqttMessage);
 
 		System.out.println(
@@ -129,7 +145,28 @@ public class Coordinator extends CoapServer implements MqttCallback {
 			} catch (Throwable e) {
 				System.out.println("Failed to run callback() bc " + e.getMessage());
 			}
+		}*/
+		if(topic.equals("float")) {
+			FloatMessage m=fh.parse(mqttMessage);
+			System.out.println(
+				"Incoming message from " + m.getSensorId() + " with topic " + topic + " value=" + m.getValue());
+			try {
+				fh.callback(m, bpm);
+			} catch (Throwable e) {
+				System.out.println("Failed to run callback() bc " + e.getMessage());
+			}
 		}
+		if(topic.equals("temperature")) {
+			TemperatureMessage m=th.parse(mqttMessage);
+			System.out.println(
+				"Incoming message from " + m.getSensorId() + " with topic " + topic + " value=" + m.getValue());
+			try {
+				th.callback(m, cm);
+			} catch (Throwable e) {
+				System.out.println("Failed to run callback() bc " + e.getMessage());
+			}
+		}
+		
 	}
 
 	@Override
@@ -145,7 +182,8 @@ public class Coordinator extends CoapServer implements MqttCallback {
 				System.out.println("Connecting to the broker: " + BROKER);
 				mqttClient.setCallback(this);
 				mqttClient.connect();
-				for (String topic : TOPICS.keySet()) {
+				String[] topics = {"float","temperature","co2"};
+				for (String topic : topics) {
 					mqttClient.subscribe(topic);
 					System.out.println("Subscribed to: " + topic);
 				}

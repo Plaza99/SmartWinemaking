@@ -5,24 +5,22 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import com.google.gson.Gson;
 
 import main.unipi.iot.DBManager;
-import main.unipi.iot.coap.ActuatorManager;
 import main.unipi.iot.coap.actuators.manager.BypassManager;
-import main.unipi.iot.mqtt.TopicHandler;
-import main.unipi.iot.mqtt.TopicMessage;
 import main.unipi.iot.mqtt.devices.messages.FloatMessage;
-
-public class FloatHandler implements TopicHandler {
+public class FloatHandler {
 
 	private static final Gson parser = new Gson();
+	private static int maxFloatLevel=99;
+	private static int minFloatLevel=1;
 	private int lastFloatLevel = 0;
 
-	@Override
-	public TopicMessage parse(MqttMessage message) {
+	
+	public FloatMessage parse(MqttMessage message) {
 		return parser.fromJson(new String(message.getPayload()), FloatMessage.class);
 	}
 
-	@Override
-	public void callback(TopicMessage parsedMessage, ActuatorManager actManager) {
+	
+	public void callback(FloatMessage parsedMessage, BypassManager actManager) {
 		FloatMessage message = (FloatMessage) parsedMessage;
 		BypassManager spoutManager = (BypassManager) actManager;
 		System.out.println(message + " - last float level: " + lastFloatLevel);

@@ -5,13 +5,13 @@ import org.eclipse.californium.core.coap.MediaTypeRegistry;
 
 
 
-public class Bypass{
+public class Cooling {
 	private String ip;
     CoapClient coapClient;
 
-    public Bypass(String ip) {
+    public Cooling(String ip) {
         this.ip = ip;
-        System.out.println("Bypass with ip: "+ip);
+        System.out.println("Cooling with ip: "+ip);
         coapClient = new CoapClient("coap://[" + ip + "]/bypass");
     }
 

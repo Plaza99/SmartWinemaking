@@ -10,12 +10,10 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import com.google.gson.Gson;
 
 import main.unipi.iot.DBManager;
-import main.unipi.iot.coap.ActuatorManager;
-import main.unipi.iot.mqtt.TopicHandler;
-import main.unipi.iot.mqtt.TopicMessage;
+import main.unipi.iot.coap.actuators.manager.CoolingManager;
 import main.unipi.iot.mqtt.devices.messages.TemperatureMessage;
 
-public class TemperatureHandler implements TopicHandler {
+public class TemperatureHandler {
 
 	private static final Gson parser = new Gson();
 
@@ -62,15 +60,15 @@ public class TemperatureHandler implements TopicHandler {
 
 	private final Map<Long, Statistics> sensorsStats = new HashMap<>();
 
-	@Override
-	public TopicMessage parse(MqttMessage message) {
+	
+	public TemperatureMessage parse(MqttMessage message) {
 		return parser.fromJson(new String(message.getPayload()), TemperatureMessage.class);
 	}
 
-	@Override
-	public void callback(TopicMessage parsedMessage, ActuatorManager actManager) {
+	
+	public void callback(TemperatureMessage parsedMessage, CoolingManager actManager) {
 		TemperatureMessage message = (TemperatureMessage) parsedMessage;
-		//AcManager manager = (AcManager) actManager;
+		CoolingManager manager = (CoolingManager) actManager;
 
 		if (!sensorsStats.containsKey(message.getSensorId()))
 			sensorsStats.put(message.getSensorId(), new Statistics());
@@ -84,7 +82,7 @@ public class TemperatureHandler implements TopicHandler {
 		String mes;
 		if (avg < (sensorStats.getLowerBoundTemperature() + (midRange - sensorStats.getLowerBoundTemperature()) / 2)) {
 			// INC
-			mes = "INC";
+			mes = "ON";
 		} else if (avg > (sensorStats.getUpperBoundTemperature()
 				- (sensorStats.getUpperBoundTemperature() - midRange) / 2)) {
 			// DEC
