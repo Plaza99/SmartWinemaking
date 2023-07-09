@@ -79,32 +79,28 @@ static struct mqtt_connection conn;
 
 PROCESS(process_for_temperature_sensor, "Temperature sensor process");
 
-static bool increase_temperature = false;
+static bool increase_temperature = true;
 static bool decrease_temperature = false;
-static int temperature = 50; // !we cannot use float value in the testbed!
+static int temperature = 25; // !we cannot use float value in the testbed!
 static int variation = 1;
 
 // Function called for handling an incoming message
 static void pub_handler(const char *topic, uint16_t topic_len, const uint8_t *chunk, uint16_t chunk_len) {
 	LOG_INFO("Message received: topic='%s' (len=%u), chunk_len=%u\n", topic, topic_len, chunk_len);
 
-	if(strcmp(topic, "AC") != 0) {
+	if(strcmp(topic, "cooling") != 0) {
 		LOG_ERR("Topic not valid!\n");
 		return;
 	}
 	
 	LOG_INFO("Received Actuator command\n");
-	if(strcmp((const char*) chunk, "INC") == 0) {
-		LOG_INFO("Turn ON the heating\n");
-		increase_temperature = true;
-		decrease_temperature = false;	
-	} else if(strcmp((const char*) chunk, "DEC") == 0) {
-		LOG_INFO("Turn ON the cooler\n");	
+	if(strcmp((const char*) chunk, "ON") == 0) {
+		LOG_INFO("Turned ON cooling\n");
 		increase_temperature = false;
-		decrease_temperature = true;
+		decrease_temperature = true;	
 	} else if(strcmp((const char*) chunk, "OFF") == 0)  {
-		LOG_INFO("Turn OFF the AC\n");	
-		increase_temperature = false;
+		LOG_INFO("Turned OFF cooling\n");	
+		increase_temperature = true;
 		decrease_temperature = false;
 	}	
 }
@@ -207,7 +203,7 @@ PROCESS_THREAD(process_for_temperature_sensor, ev, data) {
 		break;
 		case STATE_CONNECTED:
 			// Subscribe to a topic
-			strcpy(sub_topic,"AC");
+			strcpy(sub_topic,"cooling");
 			status = mqtt_subscribe(&conn, NULL, sub_topic, MQTT_QOS_LEVEL_0);
 			if(status == MQTT_STATUS_OUT_QUEUE_FULL) {
 				LOG_ERR("Tried to subscribe but command queue was full!\n");
@@ -218,15 +214,13 @@ PROCESS_THREAD(process_for_temperature_sensor, ev, data) {
 		case STATE_SUBSCRIBED:	
 			sprintf(pub_topic, "%s", "temperature");
 			
-			// simulate the behavior of the sensor				
-			if (increase_temperature || decrease_temperature) {
-				variation = rand()%3; 	// a value in [0,2]
-				temperature = (increase_temperature) ? (temperature + variation) : (temperature - variation);
-			} else {
-				if((rand()%10) < 6) { // 60% chance that the temperature will change
-					variation = (rand()%5)-2; // a value in [-2, 2]
-					temperature = temperature + variation;
-				}
+			// simulate the behavior of the sensor
+			variation = rand()%2; 		// variation value between [0,1]	
+			
+			if (increase_temperature && !decrease_temperature) {		//increase temperature			
+				temperature = temperature + variation;
+			} else if  (!increase_temperature && decrease_temperature){	//decrease temperature
+				temperature = temperature - variation;
 			}
 
 			LOG_INFO("New value of temperature: %d\n", temperature);
