@@ -127,7 +127,7 @@ PROCESS_THREAD(co2_analyzer_process, ev, data)
 {
 
 	PROCESS_BEGIN();
-
+	static button_hal_button_t *btn;
 	static char broker_address[CONFIG_IP_ADDR_STR_LEN];
 	
 	LOG_INFO("Avvio...");
@@ -150,6 +150,18 @@ PROCESS_THREAD(co2_analyzer_process, ev, data)
 	while(true) 
 	{
 		PROCESS_YIELD();
+
+		// Button pressed
+        	if(ev == button_hal_press_event) {
+            		btn = (button_hal_button_t *)data ;            
+           		printf("Press event (%s)\n", BUTTON_HAL_GET_DESCRIPTION(btn));
+            		co2_percentage+=30;
+	    	if(co2_percentage > 100){
+	    		co2_percentage=0;
+	    	}
+			leds_set(co2_percentage > 30 ? (co2_percentage > 60 ? LEDS_RED : LEDS_YELLOW) : LEDS_GREEN);
+			continue;
+        	}
 
 		if(!((ev == PROCESS_EVENT_TIMER && data == &periodic_timer) || ev == PROCESS_EVENT_POLL))
 			continue;

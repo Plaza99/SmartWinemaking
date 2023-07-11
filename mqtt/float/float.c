@@ -91,7 +91,7 @@ static void pub_handler(const char *topic, uint16_t topic_len, const uint8_t *ch
 	
 	LOG_INFO("Received Actuator command\n");
 	if(strcmp((const char*) chunk, "UP") == 0) {
-		LOG_INFO("Turned UP bypass\n");	
+		LOG_INFO("Turned DOWN bypass\n");	
 		bypass=true;	
 	} else if(strcmp((const char*) chunk, "DOWN") == 0)  {
 		LOG_INFO("Turned DOWN bypass\n");	
@@ -190,11 +190,11 @@ PROCESS_THREAD(float_process, ev, data) {
 	    	float_low=0;
 	    }
 
-			leds_set(float_low>0 ? (float_low>60 ? LEDS_RED : LEDS_YELLOW) : LEDS_GREEN);
+			leds_set(float_low > 30 ? (float_low > 60 ? LEDS_RED : LEDS_YELLOW) : LEDS_GREEN);
 			continue;
         }
 
-        leds_set(float_low>0 ? (float_low==1 ? LEDS_RED : LEDS_YELLOW) : LEDS_GREEN);
+        leds_set(float_low > 30 ? (float_low > 60 ? LEDS_RED : LEDS_YELLOW) : LEDS_GREEN);
 			
 		if(!((ev == PROCESS_EVENT_TIMER && data == &periodic_timer) || ev == PROCESS_EVENT_POLL))
 			continue;

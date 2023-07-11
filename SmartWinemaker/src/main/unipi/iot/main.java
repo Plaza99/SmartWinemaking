@@ -88,6 +88,12 @@ public class main {
 						int low = coordinator.getFloathandler().getActivationLevelLowerBound();
 						int up = coordinator.getFloathandler().getActivationLevelUpperBound();
 						System.out.println("CONSOLE - Float level activation lower bound: " + low + " and upper bound: " + up);
+					}
+					
+					// GET LAST CO2 VALUE
+					else if (parts[1].equals("co2") && parts.length == 2) {
+						int co2 = coordinator.getCo2handler().getlastCo2Value();
+						System.out.println("CONSOLE - Last Co2 value registered is: " + co2 + "%");
 					} else { // invalid command parts
 						System.out.println("CONSOLE - Command not recognised");
 					}
