@@ -19,31 +19,36 @@
 #define REGISTRATION_TRY_INTERVAL 1
 #define SIMULATION_INTERVAL 1
 
+#define DO_REGISTER 1
 
 /* Log configuration */
 #include "sys/log.h"
 #define LOG_MODULE "bypass"
 #define LOG_LEVEL LOG_LEVEL_DBG
-#define DEVICE_TYPE "{\"deviceType\": \"bypass\", \"sensorId\": 42}"
+
 #define INTERVAL_BETWEEN_CONNECTION_TESTS 1
 
 extern coap_resource_t res_bypass;
 
+#ifdef DO_REGISTER
+char *service_url = "/registration";
+static bool registered = false;
+
+#define SENSOR_TYPE "{\"deviceType\": \"bypass\", \"sensorId\": %u}"
+
+#endif
 
 static struct etimer connectivity_timer;
 static struct etimer wait_registration;
-static coap_endpoint_t server_ep;
-static coap_message_t request;
-char *service_url = "/registration";
-static bool registered = false;
+
 /*---------------------------------------------------------------------------*/
 static bool is_connected() {
 	if(NETSTACK_ROUTING.node_is_reachable()) {
-		LOG_INFO("The Border Router is connected!\n");
+		LOG_INFO("The Border Router is reachable\n");
 		return true;
   	}
 
-	LOG_INFO("Waiting connection with Border Router\n");
+	LOG_INFO("Waiting for connection with the Border Router\n");
 	return false;
 }
 
@@ -70,8 +75,10 @@ AUTOSTART_PROCESSES(&bypass_server);
 PROCESS_THREAD(bypass_server, ev, data){
 	PROCESS_BEGIN();
 
-
-	
+#ifdef DO_REGISTER
+	static coap_endpoint_t server_ep;
+    	static coap_message_t request;
+#endif
 
 	PROCESS_PAUSE();
 
@@ -88,6 +95,7 @@ PROCESS_THREAD(bypass_server, ev, data){
 		PROCESS_WAIT_UNTIL(etimer_expired(&connectivity_timer));
 	}
 
+#ifdef DO_REGISTER
 	while(!registered) {
 		static char registrationString[100] = {0};
     	static int registrationStringSize = 0;
@@ -97,11 +105,14 @@ PROCESS_THREAD(bypass_server, ev, data){
         // Prepare the message
         coap_init_message(&request, COAP_TYPE_CON, COAP_POST, 0);
         coap_set_header_uri_path(&request, service_url);
-        coap_set_payload(&request, (uint8_t *)DEVICE_TYPE, sizeof(DEVICE_TYPE)-1);
+        memset(registrationString, 0x00, 100);
+        registrationStringSize = snprintf(registrationString, 100, SENSOR_TYPE, 42);
+        coap_set_payload(&request, (uint8_t *)registrationString, registrationStringSize);
 
         COAP_BLOCKING_REQUEST(&server_ep, &request, client_chunk_handler);
 
         PROCESS_WAIT_UNTIL(etimer_expired(&wait_registration));
     }
+#endif
 	PROCESS_END();
 }

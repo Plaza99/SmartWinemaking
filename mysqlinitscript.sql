@@ -29,7 +29,8 @@ CREATE TABLE `temperature`(
 );
 
 CREATE TABLE `actuator` (
-    -- `id`        INT PRIMARY KEY,
-    `ip`        VARBINARY(16) PRIMARY KEY,
-    `type`      VARCHAR(40) NOT NULL
+    `ip`        VARCHAR(40) NOT NULL,
+    `type`      VARCHAR(40) NOT NULL,
+	
+	PRIMARY KEY (`ip`)
 );

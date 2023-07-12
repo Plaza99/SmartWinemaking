@@ -10,7 +10,7 @@ import main.unipi.iot.mqtt.devices.messages.FloatMessage;
 import main.unipi.iot.mqtt.devices.messages.TemperatureMessage;
 
 public class DBManager {
-//TODO da fare
+
 
 	private static String MySqlIp = "127.0.0.1";
 	private static int MySqlPort = 3306;
@@ -19,7 +19,6 @@ public class DBManager {
 	private static String MySqlDbName = "smart_wine";
 	private static DBManager instance;
 
-	// TODO set password,ip,name,username and port
 	public static DBManager getInstance() {
 		if (instance == null)
 			instance = new DBManager();
@@ -68,7 +67,7 @@ public class DBManager {
 						.prepareStatement("REPLACE INTO `actuator`(`ip`, `type`) VALUES (?, ?)");) {
 			statement.setString(1, ip);
 			statement.setString(2, type);
-			statement.executeUpdate();
+			System.out.println("DATABASE - INSERT NEW ACTUATOR MESSAGE: "+statement.executeUpdate());
 		} catch (final SQLException e) {
 			e.printStackTrace();
 		}
@@ -81,14 +80,6 @@ public class DBManager {
 		this.insert("temperature", 2, attr, values);
 	}
 
-	/*
-	 * public void insertSampleCO2(CO2Message m) { String[] attr=
-	 * {"id","temperature"};
-	 * 
-	 * String[] values= {
-	 * Long.toString(m.getSensorId()),Integer.toString(m.getValue())};
-	 * this.insert("temperature", 2, attr, values); }
-	 */
 	public void insertSampleFloat(FloatMessage m) {
 		String[] attr = { "id", "level" };
 
@@ -97,9 +88,9 @@ public class DBManager {
 	}
 	
 	public void insertSampleCo2(Co2Message m) {
-		String[] attr = { "id", "co2" };
+		String[] attr = { "id", "value" };
 
 		String[] values = { Long.toString(m.getSensorId()), Integer.toString(m.getValue()) };
-		this.insert("float", 2, attr, values);
+		this.insert("co2", 2, attr, values);
 	}
 }

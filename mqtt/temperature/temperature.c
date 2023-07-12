@@ -225,7 +225,7 @@ PROCESS_THREAD(process_for_temperature_sensor, ev, data) {
 
 			LOG_INFO("New value of temperature: %d\n", temperature);
 			
-			sprintf(app_buffer, "{\"node\": %d, \"temperature\": %d}", node_id, temperature);
+			sprintf(app_buffer, "{\"node\": %d, \"temperature\": %d}", 41, temperature);
 			mqtt_publish(&conn, NULL, pub_topic, (uint8_t *)app_buffer,
 			strlen(app_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
 
