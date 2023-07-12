@@ -83,7 +83,7 @@ public class Coordinator extends CoapServer implements MqttCallback {
 					coolingManager.registerNewActuator(m.sensorId, ip);
 				}
 
-				// TODO DBManager.getInstance().registerActuator(ip, m.deviceType);
+				DBManager.getInstance().insertNewActuator(ip, m.deviceType);
 
 				exchange.respond(CoAP.ResponseCode.CREATED, "Success".getBytes(StandardCharsets.UTF_8));
 			} catch (Throwable e) {
