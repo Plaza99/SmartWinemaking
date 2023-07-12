@@ -1,4 +1,4 @@
-CONTIKI_PROJECT = res_bypass
+CONTIKI_PROJECT = res_cooling
 
 all: $(CONTIKI_PROJECT)
 

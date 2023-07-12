@@ -1,4 +1,4 @@
-CONTIKI_PROJECT = smartWinemaking/mqtt/temperature
+CONTIKI_PROJECT = temperature
 all: $(CONTIKI_PROJECT)
 
 CONTIKI = /home/user/contiki-ng
