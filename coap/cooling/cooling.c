@@ -74,7 +74,7 @@ PROCESS_THREAD(cooling_server, ev, data){
 
 	PROCESS_PAUSE();
 
-	LOG_INFO("Starting Cooling CoAP-Server\n");
+	LOG_INFO("Starting: CoAP-Cooling\n");
 	coap_activate_resource(&res_cooling, "cooling"); 
 	
 

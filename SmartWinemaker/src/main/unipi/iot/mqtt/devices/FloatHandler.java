@@ -51,7 +51,6 @@ public class FloatHandler {
 	}
 
 	public int callback(FloatMessage message, BypassManager actManager) {
-		System.out.println("Current float value: "+ message.getValue() + " - Last float level: " + lastFloatLevel);
 		int currFloatLevel = message.getValue();
 		int ret=0;
 
