@@ -10,8 +10,6 @@ import java.net.UnknownHostException;
 
 import org.eclipse.californium.core.network.CoapEndpoint;
 
-import main.unipi.iot.mqtt.devices.messages.TemperatureMessage;
-
 public class main {
 
 	public static void main(String[] args) throws SocketException, UnknownHostException {
@@ -35,7 +33,7 @@ public class main {
 				if (parts[0].equals("set")) {
 
 					// SET UPPER BOUND TEMPERATURE
-					if (parts[1].equals("lowTemp") && parts.length == 3) {
+					if (parts[1].equals("tempLow") && parts.length == 3) {
 						try {
 							coordinator.getTemperaturehandler().setLowerBoundTemperature(Integer.parseInt(parts[2]));
 						} catch (Exception e) {
@@ -43,7 +41,7 @@ public class main {
 						}
 
 						// SET LOWER BOUND TEMPERATURE
-					} else if (parts[1].equals("upTemp") && parts.length == 3) {
+					} else if (parts[1].equals("tempUp") && parts.length == 3) {
 						try {
 							coordinator.getTemperaturehandler().setUpperBoundTemperature(Integer.parseInt(parts[2]));
 						} catch (Exception e) {
@@ -51,7 +49,7 @@ public class main {
 						}
 
 						// SET FLOAT LEVEL BYPASS ACTIVATION UPPER BOUND
-					} else if (parts[1].equals("activationUp") && parts.length == 3) {
+					} else if (parts[1].equals("floatUp") && parts.length == 3) {
 						try {
 							int newActivationLevel = Integer.parseInt(parts[2]);
 							coordinator.getFloathandler().setActivationLevelUpperBound(newActivationLevel);
@@ -61,7 +59,7 @@ public class main {
 
 					}
 					// SET FLOAT LEVEL BYPASS ACTIVATION LOWER BOUND
-					else if (parts[1].equals("activationLow") && parts.length == 3) {
+					else if (parts[1].equals("floatLow") && parts.length == 3) {
 						try {
 							int newActivationLevel = Integer.parseInt(parts[2]);
 							coordinator.getFloathandler().setActivationLevelLowerBound(newActivationLevel);
@@ -77,14 +75,14 @@ public class main {
 				} else if (parts[0].equals("get")) {
 
 					// GET TEMPERATURE BOUNDS VALUES
-					if (parts[1].equals("temp") && parts.length == 2) {
+					if (parts[1].equals("tempBound") && parts.length == 2) {
 						int low = coordinator.getTemperaturehandler().getLowerBoundTemperature();
 						int up = coordinator.getTemperaturehandler().getUpperBoundTemperature();
 						System.out.println("CONSOLE - Temperature lower bound: " + low + " and upper bound: " + up);
 					}
 
 					// GET BYPASS CURRENT ACTIVATION FROM FLOAT LEVEL
-					else if (parts[1].equals("activation") && parts.length == 2) {
+					else if (parts[1].equals("floatBound") && parts.length == 2) {
 						int low = coordinator.getFloathandler().getActivationLevelLowerBound();
 						int up = coordinator.getFloathandler().getActivationLevelUpperBound();
 						System.out.println("CONSOLE - Float level activation lower bound: " + low + " and upper bound: " + up);
@@ -94,7 +92,18 @@ public class main {
 					else if (parts[1].equals("co2") && parts.length == 2) {
 						int co2 = coordinator.getCo2handler().getlastCo2Value();
 						System.out.println("CONSOLE - Last Co2 value registered is: " + co2 + "%");
-					} else { // invalid command parts
+					}
+					// GET LAST TEMPERATURE VALUE
+					else if (parts[1].equals("temp") && parts.length == 2) {
+						int temp = coordinator.getTemperaturehandler().getLastTemperature();
+						System.out.println("CONSOLE - Last Temperature value registered is: " + temp);
+					} 
+					// GET LAST FLOAT VALUE
+					else if (parts[1].equals("float") && parts.length == 2) {
+						int flt = coordinator.getFloathandler().getLastFloatLevel();
+						System.out.println("CONSOLE - Last Float value registered is: " + flt + "%");
+					} 
+					else { // invalid command parts
 						System.out.println("CONSOLE - Command not recognised");
 					}
 				}

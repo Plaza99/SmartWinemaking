@@ -13,7 +13,9 @@ public class TemperatureHandler {
 	private static final Gson parser = new Gson();
 	private int lowerBoundTemperature = 23;
 	private int upperBoundTemperature = 27;
-	private int lastTemperature =0;
+	private int lastTemperature = 0;
+	
+	
 	public void setLowerBoundTemperature(int lowerBoundTemperature) {
 		if (lowerBoundTemperature < this.upperBoundTemperature) {
 			System.out.println("CONSOLE - Setted lower bound temperature to: " + lowerBoundTemperature);
@@ -62,6 +64,10 @@ public class TemperatureHandler {
 		lastTemperature = value;
 		DBManager.getInstance().insertSampleTemperature(parsedMessage);
 		return ret;
+	}
+
+	public int getLastTemperature() {
+		return lastTemperature;
 	}
 
 }

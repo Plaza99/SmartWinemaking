@@ -69,4 +69,8 @@ public class FloatHandler {
 		DBManager.getInstance().insertSampleFloat(message);
 		return ret;
 	}
+
+	public int getLastFloatLevel() {
+		return lastFloatLevel;
+	}
 }
