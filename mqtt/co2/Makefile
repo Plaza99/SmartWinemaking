@@ -1,7 +1,7 @@
 CONTIKI_PROJECT = co2
 all: $(CONTIKI_PROJECT)
 
-CONTIKI=/home/user/contiki-ng
+CONTIKI=../..
 
 include $(CONTIKI)/Makefile.dir-variables
 MODULES += $(CONTIKI_NG_APP_LAYER_DIR)/mqtt

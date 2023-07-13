@@ -152,7 +152,8 @@ public class Coordinator extends CoapServer implements MqttCallback {
 					}
 				}
 			} catch (Throwable e) {
-				System.out.println("Failed to run callback");
+				System.out.println("Failed to run callback bc ");
+				e.printStackTrace();
 			}
 		}
 

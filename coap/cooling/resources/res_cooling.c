@@ -10,25 +10,26 @@
 #define LOG_LEVEL LOG_LEVEL_DBG
 
 
-static void bypass_put_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset);
+static void cool_put_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset);
 
 RESOURCE(res_cooling,
          "title=\"Cooling notifier\";rt=\"Control\"",
          NULL,
          NULL,
-         bypass_put_handler,
+         cool_put_handler,
          NULL);
+
 
 bool cool_on = false;
 
-static void bypass_put_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset) {
+
+static void cool_put_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset) {
 	size_t len = 0;
 	const char *text = NULL;
 
 	len = coap_get_payload(request, (const uint8_t**)&text);
 	if(len <= 0 || len > 4)
 		goto error;
-	
 	if(strncmp(text, "ON", len) == 0 && !cool_on) {
 		cool_on = true;
 		leds_set(LEDS_GREEN);

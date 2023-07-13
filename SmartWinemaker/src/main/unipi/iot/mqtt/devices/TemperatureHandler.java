@@ -13,7 +13,7 @@ public class TemperatureHandler {
 	private static final Gson parser = new Gson();
 	private int lowerBoundTemperature = 23;
 	private int upperBoundTemperature = 27;
-
+	private int lastTemperature =0;
 	public void setLowerBoundTemperature(int lowerBoundTemperature) {
 		if (lowerBoundTemperature < this.upperBoundTemperature) {
 			System.out.println("CONSOLE - Setted lower bound temperature to: " + lowerBoundTemperature);
@@ -49,16 +49,17 @@ public class TemperatureHandler {
 	public int callback(TemperatureMessage parsedMessage, CoolingManager actManager) {
 		
 		int value = parsedMessage.getValue();
+		
 		int ret=0;
 		
-		if (value > upperBoundTemperature) { 		// turn on Cooling system
+		if (value > upperBoundTemperature && value>lastTemperature) { 		// turn on Cooling system
 			actManager.getAssociatedSensor(parsedMessage.getSensorId()).sendMessage("ON");
 			ret=2;
-		} else if (value < lowerBoundTemperature) { // turn off Cooling system
+		} else if (value < lowerBoundTemperature && value<lastTemperature) { // turn off Cooling system
 			actManager.getAssociatedSensor(parsedMessage.getSensorId()).sendMessage("OFF");
 			ret=1;
 		}
-		
+		lastTemperature = value;
 		DBManager.getInstance().insertSampleTemperature(parsedMessage);
 		return ret;
 	}

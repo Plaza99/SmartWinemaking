@@ -47,10 +47,12 @@ public class FloatHandler {
 	}
 	
 	public FloatMessage parse(MqttMessage message) {
+		
 		return parser.fromJson(new String(message.getPayload()), FloatMessage.class);
 	}
 
 	public int callback(FloatMessage message, BypassManager actManager) {
+		System.out.println("Current float value: "+ message.getValue() + " - Last float level: " + lastFloatLevel);
 		int currFloatLevel = message.getValue();
 		int ret=0;
 
